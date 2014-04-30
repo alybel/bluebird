@@ -5,6 +5,8 @@ access_token_secret="XXXXXXXXXXX"
 
 keywords = ["twitter", "news", "politcs"]
 
+own_twittername = "jbond"
+
 negative_keywords = ["price", "shop", "advertising", "marketing", "music", "buy"]
 
 languages = ["de", "en"]
