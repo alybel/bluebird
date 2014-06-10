@@ -77,6 +77,7 @@ class CyclicArray(object):
         elif new_length > len(self.l):
             self.l.extend((new_length - len(self.l)) * [None])
         self.array_length = len(self.l)
+        self.count = min(self.count, self.array_length -1)
         
     def release_add_lock_if_necessary(self):
         if self.add_lock:
