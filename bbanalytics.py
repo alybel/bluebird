@@ -38,7 +38,8 @@ def split_and_clean_text(t = ""):
     t = [x.lstrip("#") for x in t]
     #remove plural s
     t = [x.rstrip("s") for x in t if len(x) > 3]
-    return t
+    #Uniquifiy the list of words
+    return list(set(t))
 
 def number_hashtags(t):
     count = 0
@@ -59,14 +60,14 @@ def score_tweets(t=""):
         if word in keywords:
             score += 1
         if word in negative_keywords:
-            score -= 1
+            score -= 2
     return score
 
 def is_url_in_tweet(t = ""):
     if "http" in t: 
         return True
     return False
-
+    
 class CosineStringSimilarity(object):
     def __init__(self):
         filling_words = ["in", "to", "a", "http", "as", "of", "and", "or", "it", "is", "on", "the"]

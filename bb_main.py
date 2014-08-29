@@ -1,9 +1,13 @@
+#! /usr/bin/python -u
+
 import bbanalytics as bba
 import bblib as bbl
 import config as cfg
 import logging
 import logging.handlers
 import httplib
+import sys
+import pickle
 
 
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
@@ -15,6 +19,13 @@ hdlr_1 = logging.handlers.RotatingFileHandler("bluebird.log", maxBytes=20000000,
 hdlr_1.setFormatter(formatter)
 logr.setLevel(logging.INFO)
 logr.addHandler(hdlr_1)
+
+verbose = True
+
+def lp(s):
+    """print this line if verbose is true """
+    if verbose:
+        print s
 
 if cfg.dump_score > 0:
     # second file logger
@@ -63,11 +74,11 @@ def follow_management(t, ca, api):
     ca.add(t.user_screen_name)
     next_entry = ca.get_next_entry()
     if next_entry:
+        print next_entry
         bbl.remove_follow(next_entry, api)
     ca.increase_count()
     bbl.ca_save_state(ca, "follows")
-    return True
-    
+    return True    
 
 class FavListener(bbl.tweepy.StreamListener):
     def __init__(self, api):
@@ -108,15 +119,13 @@ class FavListener(bbl.tweepy.StreamListener):
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_r.get_list()):
                 logr.info("retweetprevented2similar;%s"%(t.id))
                 return True
+            lp("score is,")
+            lp(score)
             success = retweet_management(t.id, self.ca_r, self.api)
             if success:
                 self.ca_recent_r.add(t.text, auto_increase = True)
         if score > cfg.follow_score:
             success = follow_management(t, self.ca_f, self.api)
-        
-        if t.retweet_count > 0:
-            print json.loads(data)
-        
         if cfg.dump_score > 0 and score > cfg.dump_score:
             print "Retweet Count", t.retweet_count
             if not t.retweet_count > 5:
@@ -129,6 +138,7 @@ class FavListener(bbl.tweepy.StreamListener):
     def on_error(self, status):
         print "error: ",
         print status
+        
 
 if __name__ == "__main__":
     auth, api = bbl.connect_app_to_twitter()
@@ -141,6 +151,9 @@ if __name__ == "__main__":
         logr.info("EngineEnded")
         logging.shutdown()
     except httplib.IncompleteRead,e:
+        print "Read Error detected <- Manual Messsage"
+        print e
         logr.error(e)
+        sys.exit(0)
    # except Exception, e:
    #     logr.error(e)

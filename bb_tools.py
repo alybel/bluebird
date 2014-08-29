@@ -35,4 +35,5 @@ if __name__ == "__main__":
     if arg == "ret_stat":
         stat("retweets")
     if arg == "fol_stat":
+        print load_vector("follows")
         stat("follows")  

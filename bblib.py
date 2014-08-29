@@ -6,8 +6,31 @@ import bbanalytics
 import logging
 import pickle
 import os.path
+import datetime
+import time
+import collections 
+import sys
+
+max_no_followers_per_day = 990
 
 logr = logging.getLogger("logger")
+
+executed_number_follows_per_day = collections.defaultdict(int)
+today = str(datetime.date.today())
+
+def parse_number_follows_from_logfile():
+    with open("bluebird.log", "r") as f:
+        today_follow_counts = 0
+        for line in f:
+            if today in line and "following" in line:
+                today_follow_counts += 1
+            if "follower_level_reached" in line:
+                return 5000
+    return today_follow_counts
+
+executed_number_follows_per_day[today] = parse_number_follows_from_logfile()
+
+print "already added number of users today:", executed_number_follows_per_day[today]
 
 class CyclicArray(object):
     def __init__(self, len = 0):
@@ -120,7 +143,7 @@ def ru(s = ""):
     """
     resolve unicode and return printable string
     """
-    if type(s) == type(1): return s
+    if type(s) == type(1) or type(s) == type(9999999999999999): return s
     return None if not s else s.encode('ascii', 'ignore')
 
 def get_first_level_content(data, key):
@@ -193,6 +216,7 @@ def remove_favorite(id, api):
         logr.debug(e)
         return False
 
+
 def retweet(id, api):
     try:
         status = api.retweet(id)
@@ -216,26 +240,49 @@ def remove_retweet(id, api):
         logr.error(e)
         return False
 
+def follow_gate_open():  
+    ex_today = executed_number_follows_per_day[today]
+    if ex_today >= max_no_followers_per_day:
+        print today,"executed number of follows", ex_today
+        return False
+    return True
+
 def add_as_follower(t, api):
+    if not follow_gate_open():
+        logr.info("Follow Gate Closed")
+        return False
     if not t.user_lang in cfg.languages:
         logr.info("follow not carried out because language did not match")
         return False 
     try:
-        status = api.create_friendship(t.user_id)
-        print "followed", t.user_name, t.user_screen_name
+        api.create_friendship(t.user_screen_name)
+        print datetime.datetime.now(),"followed", t.user_name, t.user_screen_name
         logr.info("following;%s,%s;%s;%s",t.user_id, t.user_name, t.user_screen_name, t.user_description)
+        executed_number_follows_per_day[str(datetime.date.today())] += 1        
         return True
     except tweepy.error.TweepError, e:
-        print e
+        print e        
+        error_code = e[0][0]["code"]
+        if error_code == 161: 
+            logr.info("follower_level_reached")
+            executed_number_follows_per_day[today] = max_no_followers_per_day
+        time.sleep(360)
         logr.error(e)
+        sys.exit(0)
         return False
         
 def remove_follow(screen_name, api):
+    if str(screen_name).isdigit():
+        print "ERROR in remove follow: Only Screen Names are allowed!!"
+        print "Screen Name was", screen_name
+        #raise
+        #return
+    
     if screen_name in cfg.accounts_never_delete:
         logr.info("unfollowprevented;%s"%(screen_name))
         return 
     try:
-        status = api.destroy_friendship(screen_name)
+        api.destroy_friendship(screen_name)
         print "destroyed friendship", id
         logr.info("destroyedfriendship;%s",screen_name)
     except tweepy.error.TweepError, e:
@@ -247,12 +294,20 @@ def remove_follow(screen_name, api):
 #Test Connect to Stream
 ###
 ###
+        
 
 class DummyListener(tweepy.StreamListener):
+    def __init__(self):
+        self.f = open("dev_dump.txt", "w")
     def on_data(self, data):
+        print "Tweet Start"
+        self.f.write(data)
+        pprint(json.loads(data))
         tweet = tweet2obj(data)
         print tweet.text
         print tweet.created
+        print tweet.favorite_count
+        print "Tweet End \n"
         return True
     def on_error(self, status):
         print "error: ",
@@ -265,5 +320,6 @@ def test_stream():
     stream.filter(track=cfg.keywords)
     
 if __name__ == '__main__':
+    from pprint import pprint
     connect_app_to_twitter()
     test_stream()
