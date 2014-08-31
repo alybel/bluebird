@@ -80,6 +80,29 @@ def follow_management(t, ca, api):
     bbl.ca_save_state(ca, "follows")
     return True    
 
+
+class tweet_buffer(object):
+    def __init__(self, ca, api):
+        self.buffer = []
+        self.ca = ca
+        self.api = api
+        self.time = bba.minutes_of_day()
+        print self.time, "time"
+    def add_to_buffer(self, t, score):
+        if bba.minutes_of_day() - self.time >= 2:
+            self.time = bba.minutes_of_day()
+            self.flush_buffer()            
+            self.buffer = []
+        self.buffer.append((score,t))
+        
+    def flush_buffer(self):
+        self.buffer.sort(reverse = True)
+        for i in xrange(3):
+            tweet = self.buffer[i][1]
+            print self.time, self.buffer[i][0], tweet.text
+            follow_management(tweet, ca = self.ca, api = self.api)
+        return True
+
 class FavListener(bbl.tweepy.StreamListener):
     def __init__(self, api):
         self.api = api
@@ -97,6 +120,7 @@ class FavListener(bbl.tweepy.StreamListener):
         self.ca_f.release_add_lock_if_necessary()
         
         self.CSim = bba.CosineStringSimilarity()
+        self.tbuffer = tweet_buffer(api = self.api, ca = self.ca_f)
         
     def on_data(self, data):
         t = bbl.tweet2obj(data)
@@ -125,7 +149,7 @@ class FavListener(bbl.tweepy.StreamListener):
             if success:
                 self.ca_recent_r.add(t.text, auto_increase = True)
         if score > cfg.follow_score:
-            success = follow_management(t, self.ca_f, self.api)
+            self.tbuffer.add_to_buffer(t, score)         
         if cfg.dump_score > 0 and score > cfg.dump_score:
             print "Retweet Count", t.retweet_count
             if not t.retweet_count > 5:

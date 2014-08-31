@@ -11,14 +11,15 @@ import time
 import collections 
 import sys
 
-max_no_followers_per_day = 990
+max_no_followers_per_day = 992
 
 logr = logging.getLogger("logger")
 
 executed_number_follows_per_day = collections.defaultdict(int)
-today = str(datetime.date.today())
+
 
 def parse_number_follows_from_logfile():
+    today = str(datetime.date.today())
     with open("bluebird.log", "r") as f:
         today_follow_counts = 0
         for line in f:
@@ -27,10 +28,11 @@ def parse_number_follows_from_logfile():
             if "follower_level_reached" in line:
                 return 5000
     return today_follow_counts
+    
+glob_today = str(datetime.date.today())
+executed_number_follows_per_day[glob_today] = parse_number_follows_from_logfile()
 
-executed_number_follows_per_day[today] = parse_number_follows_from_logfile()
-
-print "already added number of users today:", executed_number_follows_per_day[today]
+print "already added number of users today:", executed_number_follows_per_day[glob_today]
 
 class CyclicArray(object):
     def __init__(self, len = 0):
@@ -203,7 +205,7 @@ def add_favorite(id, api):
         logr.info("FavoriteDenied;%s"%(id))
         logr.error(e)
         print e[0]
-        return False
+        sys.exit()
 
 def remove_favorite(id, api):
     try:
@@ -214,7 +216,7 @@ def remove_favorite(id, api):
     except tweepy.error.TweepError, e:
         print e
         logr.debug(e)
-        return False
+        sys.exit()
 
 
 def retweet(id, api):
@@ -240,14 +242,30 @@ def remove_retweet(id, api):
         logr.error(e)
         return False
 
+def in_time():
+    now = datetime.datetime.now()
+    now_time = now.time()
+    if now_time >= datetime.time(8,0) and now_time <= datetime.time(10,30):
+        return True
+    if now_time >= datetime.time(11,45) and now_time <= datetime.time(22,00):
+        return True
+    print "Request not in allowed time"
+    return False
+
 def follow_gate_open():  
+    today = str(datetime.date.today())
     ex_today = executed_number_follows_per_day[today]
     if ex_today >= max_no_followers_per_day:
         print today,"executed number of follows", ex_today
+        logr.info("NoFollowersExceeded")
+        return False
+    if not in_time():
+        logr.info("time not accepted")
         return False
     return True
 
 def add_as_follower(t, api):
+    today = str(datetime.date.today())
     if not follow_gate_open():
         logr.info("Follow Gate Closed")
         return False
@@ -258,7 +276,7 @@ def add_as_follower(t, api):
         api.create_friendship(t.user_screen_name)
         print datetime.datetime.now(),"followed", t.user_name, t.user_screen_name
         logr.info("following;%s,%s;%s;%s",t.user_id, t.user_name, t.user_screen_name, t.user_description)
-        executed_number_follows_per_day[str(datetime.date.today())] += 1        
+        executed_number_follows_per_day[today] += 1        
         return True
     except tweepy.error.TweepError, e:
         print e        

@@ -1,6 +1,7 @@
 import config as cfg
 import re, math
 from collections import Counter
+import datetime
 
 
 languages = cfg.languages if cfg.languages != [] else None
@@ -60,7 +61,7 @@ def score_tweets(t=""):
         if word in keywords:
             score += 1
         if word in negative_keywords:
-            score -= 2
+            score -= 10
     return score
 
 def is_url_in_tweet(t = ""):
@@ -107,8 +108,9 @@ class CosineStringSimilarity(object):
         return False
             
             
-            
-    
+def minutes_of_day():
+    return  datetime.datetime.now().time().minute + datetime.datetime.now().time().hour * 60
+ 
 if __name__ == "__main__":
     assert(lan_filter("fr") == False)
     assert(loc_filter("usa") == True)
