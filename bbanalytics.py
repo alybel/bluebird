@@ -2,14 +2,31 @@ import config as cfg
 import re, math
 from collections import Counter
 import datetime
+import logging
+logr = logging.getLogger("logger")
+import sys
 
 
 languages = cfg.languages if cfg.languages != [] else None
 locations = cfg.locations if cfg.locations != [] else None
 
 #pre-process keywords
-keywords = [str(x).lower().rstrip("s").replace("-","") for x in cfg.keywords]
-negative_keywords = [str(x).lower().rstrip("s").replace("-","") for x in cfg.negative_keywords]
+#can be deleted
+#keywords = [str(x).lower().rstrip("s").replace("-","") for x in cfg.keywords]
+#negative_keywords = [str(x).lower().rstrip("s").replace("-","") for x in cfg.negative_keywords]
+
+def manage_keywords(d = {}):
+    keylist = d.keys()    
+    for key in keylist: 
+        if " " in key: 
+            kv = key.split(" ")
+            for k in kv:
+                d[k] = d[key]/2.
+            d["".join(kv)] = d[key]
+    return d
+
+keywords = manage_keywords(cfg.keywords)
+negative_keywords = cfg.negative_keywords
 
 def generic_filter(entity, compare_list):
     if not compare_list: return True
@@ -31,15 +48,19 @@ def filter_tweets(t):
 
 def split_and_clean_text(t = ""):
     t = t.lower()
-    for p in [",","!","?","."]:
+    for p in [",","!","?",".","]","["]:
         t = t.replace(p," ")
     t = t.replace("-","")  
+    #split t into pieces
     t = t.split(" ")
     #remove hashtags
     t = [x.lstrip("#") for x in t]
     #remove plural s
     t = [x.rstrip("s") for x in t if len(x) > 3]
     #Uniquifiy the list of words
+    #buld tuples of 2 words
+    tstar = [t[i] + " " + t[i+1] for i,x in enumerate(t) if i < len(t)-1]    
+    t.extend(tstar)
     return list(set(t))
 
 def number_hashtags(t):
@@ -55,13 +76,16 @@ def score_tweets(t=""):
     scan description for list of keywords as set in the config file. If any keyword matches, return True.
     The function will not return True on "data science" and "datascience"
     """
+    q = t
     t = split_and_clean_text(t)
     score = 0
     for word in t:
         if word in keywords:
-            score += 1
+            score += keywords[word]
         if word in negative_keywords:
             score -= 10
+    if score >=5:
+        logr.info("TestTweet;%d;%s:%s"%(score,q,t))
     return score
 
 def is_url_in_tweet(t = ""):

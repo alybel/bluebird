@@ -20,6 +20,8 @@ hdlr_1.setFormatter(formatter)
 logr.setLevel(logging.INFO)
 logr.addHandler(hdlr_1)
 
+print "Retweet Score", cfg.retweet_score
+
 verbose = True
 
 def lp(s):
@@ -52,6 +54,7 @@ def favorite_management(id, ca, api):
     return True
 
 def retweet_management(id, ca, api):
+    logr.info("Entering Retweet Management")
     if ca.isin(id):
         return False
     rt_id = bbl.retweet(id, api)
@@ -88,14 +91,18 @@ class tweet_buffer(object):
         self.api = api
         self.time = bba.minutes_of_day()
         print self.time, "time"
+        print "initiate tweet buffer"
+        logr.info("initiate tweet buffer")
     def add_to_buffer(self, t, score):
-        if bba.minutes_of_day() - self.time >= 2:
+        print "added_to_buffer"
+        if bba.minutes_of_day() - self.time > 0:
             self.time = bba.minutes_of_day()
             self.flush_buffer()            
             self.buffer = []
         self.buffer.append((score,t))
         
     def flush_buffer(self):
+        print "Flush Buffer!"
         self.buffer.sort(reverse = True)
         for i in xrange(3):
             tweet = self.buffer[i][1]
@@ -124,6 +131,9 @@ class FavListener(bbl.tweepy.StreamListener):
         
     def on_data(self, data):
         t = bbl.tweet2obj(data)
+        #in case tweet cannot be put in object format just skip this tweet
+        if not t:
+            return True
         if t.user_screen_name == cfg.own_twittername:
             return True
         #Filter Tweets for language and location as in configuration
@@ -131,6 +141,8 @@ class FavListener(bbl.tweepy.StreamListener):
             return True
         #add score if tweet is relevant
         score = bba.score_tweets(t.text)
+        if score >= 16:
+            print t.text
         if score > cfg.favorite_score:
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_f.get_list()):
                 logr.info("favoriteprevented2similar;%s"%(t.id))
@@ -139,16 +151,20 @@ class FavListener(bbl.tweepy.StreamListener):
             if success:
                 self.ca_recent_f.add(t.text, auto_increase = True)
                 self.ca_recent_f.cprint()
-        if score > cfg.retweet_score:
+        if score >= cfg.retweet_score:
+            print "enter retweet I"
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_r.get_list()):
                 logr.info("retweetprevented2similar;%s"%(t.id))
                 return True
+            print "enter retweet II"
             lp("score is,")
             lp(score)
             success = retweet_management(t.id, self.ca_r, self.api)
+            print "enter retweet III"
             if success:
                 self.ca_recent_r.add(t.text, auto_increase = True)
-        if score > cfg.follow_score:
+        if score >= cfg.follow_score:
+            print "entering followers ares"
             self.tbuffer.add_to_buffer(t, score)         
         if cfg.dump_score > 0 and score > cfg.dump_score:
             print "Retweet Count", t.retweet_count
@@ -169,15 +185,22 @@ if __name__ == "__main__":
     l = FavListener(api)
     stream = bbl.tweepy.Stream(auth, l)
     logr.info("EngineStarted")
-    try:
-        stream.filter(track=cfg.keywords)
-    except KeyboardInterrupt:
-        logr.info("EngineEnded")
-        logging.shutdown()
-    except httplib.IncompleteRead,e:
-        print "Read Error detected <- Manual Messsage"
-        print e
-        logr.error(e)
-        sys.exit(0)
+    while True:
+        try:
+            stream.filter(track=bba.manage_keywords(cfg.keywords).keys())
+        except KeyboardInterrupt:
+            logr.info("EngineEnded")
+            logging.shutdown()
+            sys.exit()
+        except Exception,e:
+            logr.error(e)          
+            pass
+#==============================================================================
+#     except httplib.IncompleteRead,e:
+#         print "Read Error detected <- Manual Messsage"
+#         print e
+#         logr.error(e)
+#         sys.exit(0)
+#==============================================================================
    # except Exception, e:
    #     logr.error(e)

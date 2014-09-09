@@ -11,6 +11,7 @@ import time
 import collections 
 import sys
 
+
 max_no_followers_per_day = 992
 
 logr = logging.getLogger("logger")
@@ -25,7 +26,7 @@ def parse_number_follows_from_logfile():
         for line in f:
             if today in line and "following" in line:
                 today_follow_counts += 1
-            if "follower_level_reached" in line:
+            if today in line and "follower_level_reached" in line:
                 return 5000
     return today_follow_counts
     
@@ -160,23 +161,26 @@ def tweet2obj(data):
     data = json.loads(data)
     if cfg.verbose:
         print data
-    t.text = get_first_level_content(data,"text")
-    t.lan = get_first_level_content(data,"lang")
-    t.created = get_first_level_content(data,"created_at")
-    t.id = get_first_level_content(data, "id")
-    t.favorite_count  = get_first_level_content(data, "favorite_count")
-    t.retweet_count = get_first_level_content(data, "retweet_count")
-    t.retweeted = get_first_level_content(data, "retweeted")
-    user = data["user"]
-    t.description = get_first_level_content(user,"description")
-    t.loc = get_first_level_content(user, "location")
-    t.user_lang = get_first_level_content(user, "lang")
-    t.user_id = get_first_level_content(user, "id")
-    t.user_name = get_first_level_content(user, "name")
-    t.user_screen_name = get_first_level_content(user, "screen_name")
-    t.user_description = get_first_level_content(user, "description")
-    t.user_no_followers = get_first_level_content(user, "followers_count")
-    return t
+    try:
+        t.text = get_first_level_content(data,"text")
+        t.lan = get_first_level_content(data,"lang")
+        t.created = get_first_level_content(data,"created_at")
+        t.id = get_first_level_content(data, "id")
+        t.favorite_count  = get_first_level_content(data, "favorite_count")
+        t.retweet_count = get_first_level_content(data, "retweet_count")
+        t.retweeted = get_first_level_content(data, "retweeted")
+        user = data["user"]
+        t.description = get_first_level_content(user,"description")
+        t.loc = get_first_level_content(user, "location")
+        t.user_lang = get_first_level_content(user, "lang")
+        t.user_id = get_first_level_content(user, "id")
+        t.user_name = get_first_level_content(user, "name")
+        t.user_screen_name = get_first_level_content(user, "screen_name")
+        t.user_description = get_first_level_content(user, "description")
+        t.user_no_followers = get_first_level_content(user, "followers_count")
+        return t
+    except:
+        return None
 
 def print_tweet(t):
     print "-----"
@@ -265,6 +269,7 @@ def follow_gate_open():
     return True
 
 def add_as_follower(t, api):
+    print "DEBUG1"
     today = str(datetime.date.today())
     if not follow_gate_open():
         logr.info("Follow Gate Closed")
@@ -318,14 +323,16 @@ class DummyListener(tweepy.StreamListener):
     def __init__(self):
         self.f = open("dev_dump.txt", "w")
     def on_data(self, data):
-        print "Tweet Start"
+        #print "Tweet Start"
         self.f.write(data)
-        pprint(json.loads(data))
+        #pprint(json.loads(data))
         tweet = tweet2obj(data)
-        print tweet.text
-        print tweet.created
-        print tweet.favorite_count
-        print "Tweet End \n"
+        if not tweet: return True
+        print('.'),
+        #print tweet.text
+        #print tweet.created
+        #print tweet.favorite_count
+        #print "Tweet End \n"
         return True
     def on_error(self, status):
         print "error: ",
@@ -335,7 +342,14 @@ def test_stream():
     auth, api = connect_app_to_twitter()
     l = DummyListener()
     stream = tweepy.Stream(auth, l)
-    stream.filter(track=cfg.keywords)
+    kw = bbanalytics.manage_keywords(cfg.keywords)
+    print kw.keys()
+    while True:
+        try:
+            stream.filter(track=kw.keys())
+        except Exception, e:
+            print e
+            pass
     
 if __name__ == '__main__':
     from pprint import pprint
