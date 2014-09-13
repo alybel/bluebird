@@ -147,7 +147,9 @@ class FavListener(bbl.tweepy.StreamListener):
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_f.get_list()):
                 logr.info("favoriteprevented2similar;%s"%(t.id))
                 return True
+            print "DEBUG1"                
             success = favorite_management(t.id, self.ca, self.api)
+            print "DEBUG2"
             if success:
                 self.ca_recent_f.add(t.text, auto_increase = True)
                 self.ca_recent_f.cprint()
