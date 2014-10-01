@@ -48,7 +48,9 @@ def favorite_management(id, ca, api):
     ca.add(id)
     next_entry = ca.get_next_entry()
     if next_entry:
-        bbl.remove_favorite(next_entry, api)           
+        #try except needed becasue users may not exist anymore in the future. removing them would then throw an error
+        try:bbl.remove_favorite(next_entry, api)
+        except:pass
     ca.increase_count()
     bbl.ca_save_state(ca, "favorites")
     return True
@@ -63,7 +65,9 @@ def retweet_management(id, ca, api):
     ca.add(rt_id)
     next_entry = ca.get_next_entry()
     if next_entry:
-        bbl.remove_retweet(next_entry, api)
+        #try except needed becasue retweets may not exist anymore in the future. removing them would then throw an error
+        try: bbl.remove_retweet(next_entry, api)
+        except: pass
     ca.increase_count()
     bbl.ca_save_state(ca, "retweets")
     return True
