@@ -73,6 +73,7 @@ def retweet_management(id, ca, api):
     return True
 
 def follow_management(t, ca, api):
+    lp("entering follow management")
     if ca.isin(t.user_id):
         return False
     status = bbl.add_as_follower(t,api)
@@ -81,8 +82,8 @@ def follow_management(t, ca, api):
     ca.add(t.user_screen_name)
     next_entry = ca.get_next_entry()
     if next_entry:
-        print next_entry
-        bbl.remove_follow(next_entry, api)
+        try: bbl.remove_follow(next_entry, api)
+        except: pass
     ca.increase_count()
     bbl.ca_save_state(ca, "follows")
     return True    
@@ -98,7 +99,7 @@ class tweet_buffer(object):
         print "initiate tweet buffer"
         logr.info("initiate tweet buffer")
     def add_to_buffer(self, t, score):
-        print "added_to_buffer"
+        lp("added_to_buffer")
         if bba.minutes_of_day() - self.time > 0:
             self.time = bba.minutes_of_day()
             self.flush_buffer()            
@@ -151,26 +152,20 @@ class FavListener(bbl.tweepy.StreamListener):
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_f.get_list()):
                 logr.info("favoriteprevented2similar;%s"%(t.id))
                 return True
-            print "DEBUG1"                
             success = favorite_management(t.id, self.ca, self.api)
-            print "DEBUG2"
             if success:
                 self.ca_recent_f.add(t.text, auto_increase = True)
                 self.ca_recent_f.cprint()
         if score >= cfg.retweet_score:
-            print "enter retweet I"
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_r.get_list()):
                 logr.info("retweetprevented2similar;%s"%(t.id))
                 return True
-            print "enter retweet II"
             lp("score is,")
             lp(score)
             success = retweet_management(t.id, self.ca_r, self.api)
-            print "enter retweet III"
             if success:
                 self.ca_recent_r.add(t.text, auto_increase = True)
         if score >= cfg.follow_score:
-            print "entering followers ares"
             self.tbuffer.add_to_buffer(t, score)         
         if cfg.dump_score > 0 and score > cfg.dump_score:
             print "Retweet Count", t.retweet_count
