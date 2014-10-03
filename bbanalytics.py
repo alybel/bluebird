@@ -133,6 +133,10 @@ class CosineStringSimilarity(object):
             
             
 def minutes_of_day():
+    """
+
+    :rtype : datetime
+    """
     return  datetime.datetime.now().time().minute + datetime.datetime.now().time().hour * 60
  
 if __name__ == "__main__":

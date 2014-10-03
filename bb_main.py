@@ -95,19 +95,19 @@ class tweet_buffer(object):
         self.ca = ca
         self.api = api
         self.time = bba.minutes_of_day()
-        print self.time, "time"
+        lp("%s, time"%(str(self.time)))
         print "initiate tweet buffer"
         logr.info("initiate tweet buffer")
+
     def add_to_buffer(self, t, score):
-        lp("added_to_buffer")
-        if bba.minutes_of_day() - self.time > 0:
+        if bba.minutes_of_day() - self.time > 2:
             self.time = bba.minutes_of_day()
             self.flush_buffer()            
             self.buffer = []
         self.buffer.append((score,t))
         
     def flush_buffer(self):
-        print "Flush Buffer!"
+        print "Flush Buffer!", bba.minutes_of_day()
         self.buffer.sort(reverse = True)
         for i in xrange(3):
             tweet = self.buffer[i][1]
