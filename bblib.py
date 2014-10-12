@@ -17,10 +17,6 @@ if not os.path.isfile("bluebird.log"):
     f.close()
     print "Logfile bluebird.log created."
 
-
-
-
-
 max_no_followers_per_day = 992
 
 logr = logging.getLogger("logger")
@@ -231,7 +227,6 @@ def remove_favorite(id, api):
         logr.debug(e)
         sys.exit()
 
-
 def retweet(id, api):
     try:
         status = api.retweet(id)
@@ -278,7 +273,6 @@ def follow_gate_open():
     return True
 
 def add_as_follower(t, api):
-    print "DEBUG1"
     today = str(datetime.date.today())
     if not follow_gate_open():
         logr.info("Follow Gate Closed")

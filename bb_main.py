@@ -20,12 +20,9 @@ formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 # first file logger
 logr = logging.getLogger('logger')
 hdlr_1 = logging.handlers.RotatingFileHandler("bluebird.log", maxBytes=20000000, backupCount=1)
-#hdlr_1 = logging.FileHandler('bluebird.log')
 hdlr_1.setFormatter(formatter)
 logr.setLevel(logging.INFO)
 logr.addHandler(hdlr_1)
-
-print "Retweet Score", cfg.retweet_score
 
 verbose = True
 
@@ -61,7 +58,7 @@ def favorite_management(id, ca, api):
     return True
 
 def retweet_management(id, ca, api):
-    logr.info("Entering Retweet Management")
+    lp("Entering Retweet Management")
     if ca.isin(id):
         return False
     rt_id = bbl.retweet(id, api)
@@ -101,7 +98,7 @@ class tweet_buffer(object):
         self.api = api
         self.time = bba.minutes_of_day()
         lp("%s, time"%(str(self.time)))
-        print "initiate tweet buffer"
+        lp("initiate tweet buffer")
         logr.info("initiate tweet buffer")
 
     def add_to_buffer(self, t, score):
@@ -112,7 +109,7 @@ class tweet_buffer(object):
         self.buffer.append((score,t))
         
     def flush_buffer(self):
-        print "Flush Buffer!", bba.minutes_of_day()
+        lp("Flush Buffer!%s"%str(bba.minutes_of_day()))
         self.buffer.sort(reverse = True)
         for i in xrange(3):
             tweet = self.buffer[i][1]
@@ -174,10 +171,8 @@ class FavListener(bbl.tweepy.StreamListener):
         if score >= cfg.follow_score:
             self.tbuffer.add_to_buffer(t, score)         
         if cfg.dump_score > 0 and score > cfg.dump_score:
-            print "Retweet Count", t.retweet_count
             if not t.retweet_count > 5:
                 return True
-            print "written to dump"
             logr_2.info("%s;%s;%s"%(t.user_screen_name, t.user_description, t.text))
         return True
             
