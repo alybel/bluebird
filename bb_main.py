@@ -8,7 +8,12 @@ import logging.handlers
 import httplib
 import sys
 import pickle
+import os.path
 
+appendix = ''
+
+if os.path.isfile(".production"):
+    appendix = "prod_"
 
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
@@ -100,7 +105,7 @@ class tweet_buffer(object):
         logr.info("initiate tweet buffer")
 
     def add_to_buffer(self, t, score):
-        if bba.minutes_of_day() - self.time > 2:
+        if bba.minutes_of_day() - self.time > 1:
             self.time = bba.minutes_of_day()
             self.flush_buffer()            
             self.buffer = []
@@ -123,17 +128,17 @@ class FavListener(bbl.tweepy.StreamListener):
         self.ca = bbl.ca_initialize("favorites")
         self.ca_r = bbl.ca_initialize("retweets")
         self.ca_f = bbl.ca_initialize("follows")
-        
+
         self.ca_recent_r = bbl.CyclicArray(100)
         self.ca_recent_f =  bbl.CyclicArray(100)
-        
+
         self.ca.release_add_lock_if_necessary()
         self.ca_r.release_add_lock_if_necessary()
         self.ca_f.release_add_lock_if_necessary()
-        
+
         self.CSim = bba.CosineStringSimilarity()
         self.tbuffer = tweet_buffer(api = self.api, ca = self.ca_f)
-        
+
     def on_data(self, data):
         t = bbl.tweet2obj(data)
         #in case tweet cannot be put in object format just skip this tweet
