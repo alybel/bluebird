@@ -10,6 +10,15 @@ import datetime
 import time
 import collections 
 import sys
+import os.path
+
+if not os.path.isfile("bluebird.log"):
+    f = open("bluebird.log","w")
+    f.close()
+    print "Logfile bluebird.log created."
+
+
+
 
 
 max_no_followers_per_day = 992

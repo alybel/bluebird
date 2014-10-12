@@ -27,6 +27,7 @@ def manage_keywords(d = {}):
 
 keywords = manage_keywords(cfg.keywords)
 negative_keywords = cfg.negative_keywords
+forbidden_keywords = cfg.forbidden_keywords
 
 def generic_filter(entity, compare_list):
     if not compare_list: return True
@@ -56,7 +57,7 @@ def split_and_clean_text(t = ""):
     #remove hashtags
     t = [x.lstrip("#") for x in t]
     #remove plural s
-    t = [x.rstrip("s") for x in t if len(x) > 3]
+    t = [x.rstrip("s") for x in t if len(x) > 2]
     #Uniquifiy the list of words
     #buld tuples of 2 words
     tstar = [t[i] + " " + t[i+1] for i,x in enumerate(t) if i < len(t)-1]    
@@ -84,7 +85,9 @@ def score_tweets(t=""):
             score += keywords[word]
         if word in negative_keywords:
             score -= 10
-    if score >=5:
+        if word in forbidden_keywords:
+            score -= 1000
+    if score >=0:
         logr.info("TestTweet;%d;%s:%s"%(score,q,t))
     return score
 

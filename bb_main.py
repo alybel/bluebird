@@ -146,13 +146,12 @@ class FavListener(bbl.tweepy.StreamListener):
             return True
         if t.user_screen_name == cfg.own_twittername:
             return True
-        #Filter Tweets for language and location as in configuration
+        #Filter Tweets for url in tweet, number hashtags, language and location as in configuration
         if not bba.filter_tweets(t):
             return True
         #add score if tweet is relevant
         score = bba.score_tweets(t.text)
-        if score >= 16:
-            print t.text
+        #Manage Favorites
         if score > cfg.favorite_score:
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_f.get_list()):
                 logr.info("favoriteprevented2similar;%s"%(t.id))
@@ -161,6 +160,7 @@ class FavListener(bbl.tweepy.StreamListener):
             if success:
                 self.ca_recent_f.add(t.text, auto_increase = True)
                 self.ca_recent_f.cprint()
+        #Manage Retweets
         if score >= cfg.retweet_score:
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_r.get_list()):
                 logr.info("retweetprevented2similar;%s"%(t.id))
@@ -170,6 +170,7 @@ class FavListener(bbl.tweepy.StreamListener):
             success = retweet_management(t.id, self.ca_r, self.api)
             if success:
                 self.ca_recent_r.add(t.text, auto_increase = True)
+        #Manage Follows
         if score >= cfg.follow_score:
             self.tbuffer.add_to_buffer(t, score)         
         if cfg.dump_score > 0 and score > cfg.dump_score:
