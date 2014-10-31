@@ -283,7 +283,7 @@ def add_as_follower(t, api):
     try:
         api.create_friendship(t.user_screen_name)
         print datetime.datetime.now(),"followed", t.user_name, t.user_screen_name
-        logr.info("following;%s,%s;%s;%s",t.user_id, t.user_name, t.user_screen_name, t.user_description)
+        logr.info("followinguser;%s,%s;%s;%s",t.user_id, t.user_name, t.user_screen_name, t.user_description)
         executed_number_follows_per_day[today] += 1        
         return True
     except tweepy.error.TweepError, e:
