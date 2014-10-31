@@ -71,7 +71,7 @@ def number_hashtags(t):
             count +=1
     return count
 
-def score_tweets(t=""):
+def score_tweets(t="", verbose = False):
     """
     input cleaned_text
     scan description for list of keywords as set in the config file. If any keyword matches, return True.
@@ -87,8 +87,11 @@ def score_tweets(t=""):
             score -= 10
         if word in forbidden_keywords:
             score -= 1000
-    if score >=0:
+    if score >=0 and verbose:
         logr.info("TestTweet;%d;%s:%s"%(score,q,t))
+        print score
+        print q
+        print t
     return score
 
 def is_url_in_tweet(t = ""):
