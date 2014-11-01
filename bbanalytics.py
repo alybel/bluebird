@@ -98,7 +98,13 @@ def is_url_in_tweet(t = ""):
     if "http" in t: 
         return True
     return False
-    
+
+def extract_url_from_tweet(t = ""):
+    q = t.split(" ")
+    for word in q:
+        if "http" in word:
+            return word
+
 class CosineStringSimilarity(object):
     def __init__(self):
         filling_words = ["in", "to", "a", "http", "as", "of", "and", "or", "it", "is", "on", "the"]

@@ -11,6 +11,11 @@ import time
 import collections 
 import sys
 import os.path
+import random
+import random
+
+#verbose2 for all data that flows in
+verbose2 = False
 
 if not os.path.isfile("bluebird.log"):
     f = open("bluebird.log","w")
@@ -29,7 +34,7 @@ def parse_number_follows_from_logfile():
     with open("bluebird.log", "r") as f:
         today_follow_counts = 0
         for line in f:
-            if today in line and "following" in line:
+            if today in line and "followinguser" in line:
                 today_follow_counts += 1
             if today in line and "follower_level_reached" in line:
                 return 5000
@@ -164,7 +169,7 @@ def get_first_level_content(data, key):
 def tweet2obj(data):
     class t:pass
     data = json.loads(data)
-    if cfg.verbose:
+    if verbose2:
         print data
     try:
         t.text = get_first_level_content(data,"text")
@@ -227,6 +232,16 @@ def remove_favorite(id, api):
         logr.debug(e)
         sys.exit()
 
+def update_status(url, api):
+    pre = random.choice(cfg.preambles)
+    hash = random.choice(cfg.hashtags)
+    text = "%s %s %s"%(pre,url,hash)
+    if len(text) > 140:
+        print "Text Too Long!"
+        return None
+    status = api.update_status(text)
+    logr.info("StatusUpdate;%s"%(text))
+
 def retweet(id, api):
     try:
         status = api.retweet(id)
@@ -272,10 +287,12 @@ def follow_gate_open():
         return False
     return True
 
-def add_as_follower(t, api):
+def add_as_follower(t, api, verbose = False):
     today = str(datetime.date.today())
     if not follow_gate_open():
         logr.info("Follow Gate Closed")
+        if verbose:
+            print "follow gate closed"
         return False
     if not t.user_lang in cfg.languages:
         logr.info("follow not carried out because language did not match")
@@ -284,6 +301,10 @@ def add_as_follower(t, api):
         api.create_friendship(t.user_screen_name)
         print datetime.datetime.now(),"followed", t.user_name, t.user_screen_name
         logr.info("followinguser;%s,%s;%s;%s",t.user_id, t.user_name, t.user_screen_name, t.user_description)
+        if verbose:
+            print "Following User"
+            print t.user_screen_name
+            print t.user_description
         executed_number_follows_per_day[today] += 1        
         return True
     except tweepy.error.TweepError, e:

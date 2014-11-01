@@ -79,7 +79,7 @@ def follow_management(t, ca, api):
     lp("entering follow management")
     if ca.isin(t.user_id):
         return False
-    status = bbl.add_as_follower(t,api)
+    status = bbl.add_as_follower(t,api, verbose = verbose)
     if not status:
         return False
     ca.add(t.user_screen_name)
@@ -159,6 +159,9 @@ class FavListener(bbl.tweepy.StreamListener):
                 self.ca_recent_f.add(t.text, auto_increase = True)
                 self.ca_recent_f.cprint()
         #Manage Retweets
+        if score >= cfg.status_update_score:
+            url = bba.extract_url_from_tweet(t.text)
+            bbl.update_status(url = url, api = self.api)
         if score >= cfg.retweet_score:
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_r.get_list()):
                 logr.info("retweetprevented2similar;%s"%(t.id))
