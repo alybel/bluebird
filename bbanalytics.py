@@ -105,6 +105,7 @@ def extract_url_from_tweet(t = ""):
     for word in q:
         if "http" in word and len(word) > 18:
             return word
+    return None
 
 class CosineStringSimilarity(object):
     def __init__(self):

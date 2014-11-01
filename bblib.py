@@ -250,14 +250,15 @@ class BuildText(object):
         #build first part of text
         text = "%s %s"%(pre, url)
         #add hashtags until tweet length is full
-        for i in xrange(10):
+        for i in xrange(3):
             old_text = text
-            text += random.choice(self.hashtags)
+            text += " " + random.choice(self.hashtags)
             if len(text) > 140:
                 text = old_text
                 break
         if cfg.verbose:
             print "generic text:", text
+        self.last_used_preamble = pre
         return text
 
 def update_status(text, api):
