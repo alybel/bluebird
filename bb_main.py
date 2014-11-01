@@ -27,6 +27,8 @@ logr.addHandler(hdlr_1)
 
 verbose = cfg.verbose
 
+TextBuilder = bbl.BuildText(cfg.preambles, cfg.hashtags)
+
 def lp(s):
     """print this line if verbose is true """
     if verbose:
@@ -161,7 +163,8 @@ class FavListener(bbl.tweepy.StreamListener):
         #Manage Retweets
         if score >= cfg.status_update_score:
             url = bba.extract_url_from_tweet(t.text)
-            bbl.update_status(url = url, api = self.api)
+            text = TextBuilder.build_text(url)
+            bbl.update_status(text = text, api = self.api)
         if score >= cfg.retweet_score:
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_r.get_list()):
                 logr.info("retweetprevented2similar;%s"%(t.id))

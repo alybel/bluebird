@@ -100,9 +100,10 @@ def is_url_in_tweet(t = ""):
     return False
 
 def extract_url_from_tweet(t = ""):
+    "extract url from a string. Check if url is more than 18 characters, as for example: http://bit.ly/fi23uhf"
     q = t.split(" ")
     for word in q:
-        if "http" in word:
+        if "http" in word and len(word) > 18:
             return word
 
 class CosineStringSimilarity(object):

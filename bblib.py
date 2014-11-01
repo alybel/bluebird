@@ -232,15 +232,41 @@ def remove_favorite(id, api):
         logr.debug(e)
         sys.exit()
 
-def update_status(url, api):
-    pre = random.choice(cfg.preambles)
-    hash = random.choice(cfg.hashtags)
-    text = "%s %s %s"%(pre,url,hash)
+
+class BuildText(object):
+    def __init__(self, preambles, hashtags):
+        self.preambles = preambles
+        self.hashtags = hashtags
+        self.last_used_preamble = ""
+    def build_text(self, url):
+        """
+        take in a URL and build a tweet around it. use preambles and hashtags from random choice but make sure not to repeat the last one.
+        """
+        #choose preamble
+        pre = random.choice(self.preambles)
+        #if preamble is same as last, iterate to find another one
+        while pre == self.last_used_preamble:
+            pre = random.choice(self.preambles)
+        #build first part of text
+        text = "%s %s"%(pre, url)
+        #add hashtags until tweet length is full
+        for i in xrange(10):
+            old_text = text
+            text += random.choice(self.hashtags)
+            if len(text) > 140:
+                text = old_text
+                break
+        if cfg.verbose:
+            print "generic text:", text
+        return text
+
+def update_status(text, api):
     if len(text) > 140:
         print "Text Too Long!"
         return None
     status = api.update_status(text)
     logr.info("StatusUpdate;%s"%(text))
+    return
 
 def retweet(id, api):
     try:
