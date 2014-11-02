@@ -165,7 +165,8 @@ class FavListener(bbl.tweepy.StreamListener):
             url = bba.extract_url_from_tweet(t.text)
             if url:
                 text = TextBuilder.build_text(url)
-                bbl.update_status(text = text, api = self.api)
+                if text:
+                    bbl.update_status(text = text, api = self.api)
         if score >= cfg.retweet_score:
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_r.get_list()):
                 logr.info("retweetprevented2similar;%s"%(t.id))

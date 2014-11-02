@@ -95,6 +95,10 @@ def score_tweets(t="", verbose = False):
     return score
 
 def is_url_in_tweet(t = ""):
+    q = t.split(" ")
+    for word in q:
+        if len(word) > 10 and "." in word and "/" in word:
+            return True
     if "http" in t: 
         return True
     return False

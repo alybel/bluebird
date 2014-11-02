@@ -13,6 +13,9 @@ import sys
 import os.path
 import random
 import random
+import lxml.html
+
+
 
 #verbose2 for all data that flows in
 verbose2 = False
@@ -235,20 +238,34 @@ def remove_favorite(id, api):
 
 class BuildText(object):
     def __init__(self, preambles, hashtags):
+        #this line to be deleted and preambled removed from function call and in init
         self.preambles = preambles
         self.hashtags = hashtags
         self.last_used_preamble = ""
+
+    def get_title_from_website(self, url):
+        try:
+            t = lxml.html.parse(url)
+            text = t.find(".//title").text
+            if len(text) > 20:
+                return text
+            else:
+                return None
+        except:
+            return None
+
     def build_text(self, url):
         """
         take in a URL and build a tweet around it. use preambles and hashtags from random choice but make sure not to repeat the last one.
         """
         #choose preamble
-        pre = random.choice(self.preambles)
-        #if preamble is same as last, iterate to find another one
-        while pre == self.last_used_preamble:
-            pre = random.choice(self.preambles)
         #build first part of text
-        text = "%s %s"%(pre, url)
+        title = self.get_title_from_website(url)
+        if not title:
+            return None
+        text = "%s %s"%(title, url)
+        if not text:
+            return None
         #add hashtags until tweet length is full
         for i in xrange(3):
             old_text = text
@@ -258,12 +275,11 @@ class BuildText(object):
                 break
         if cfg.verbose:
             print "generic text:", text
-        self.last_used_preamble = pre
         return text
 
 def update_status(text, api):
     if len(text) > 140:
-        print "Text Too Long!"
+        if cfg.verbose: print "Text Too Long!"
         return None
     status = api.update_status(text)
     logr.info("StatusUpdate;%s"%(text))
