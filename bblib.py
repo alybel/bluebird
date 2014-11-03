@@ -242,17 +242,36 @@ class BuildText(object):
         self.preambles = preambles
         self.hashtags = hashtags
         self.last_used_preamble = ""
+        if os.path.isfile("last_title"):
+            self.last_titles = self.load_last_titles()
+        else:
+            self.last_titles = CyclicArray(100)
 
     def get_title_from_website(self, url):
         try:
             t = lxml.html.parse(url)
             text = t.find(".//title").text
+            if self.last_titles.isin(text):
+                print "DEBUG: Title has already been TWeeted"
+                raise
             if len(text) > 20:
+                self.last_titles.add(text, auto_increase= True)
+                self.update_last_titles(self.last_titles)
                 return text
             else:
                 return None
         except:
             return None
+
+    def load_last_titles(self):
+        with open("last_title","r") as f:
+            return pickle.load(f)
+
+    def update_last_titles(self, l):
+        f = open("last_title","w")
+        pickle.dump(l,f)
+        f.close()
+        return
 
     def build_text(self, url):
         """
@@ -278,7 +297,7 @@ class BuildText(object):
         return text
 
 def update_status(text, api):
-    if len(text) > 140:
+    if len(text) > 135:
         if cfg.verbose: print "Text Too Long!"
         return None
     status = api.update_status(text)
@@ -294,7 +313,7 @@ def retweet(id, api):
     except tweepy.error.TweepError, e:
         print e
         logr.info("RetweetDenied;%s"%(id))
-        logr.error(e)
+        logr.error("in function bblib:retweet;%s"%e)
         return False
     
 def remove_retweet(id, api):
@@ -305,7 +324,7 @@ def remove_retweet(id, api):
     except tweepy.error.TweepError, e:
         print e
         logr.info("RetweetDestroyDenied;%s"%(id))
-        logr.error(e)
+        logr.error("in function: remove retweet; %s"%e)
         return False
 
 def in_time():
@@ -357,7 +376,7 @@ def add_as_follower(t, api, verbose = False):
             logr.info("follower_level_reached")
             executed_number_follows_per_day[today] = max_no_followers_per_day
         time.sleep(360)
-        logr.error(e)
+        logr.error("in function add_as_follower;%s"%e)
         sys.exit(0)
         return False
         
@@ -377,7 +396,7 @@ def remove_follow(screen_name, api):
         logr.info("destroyedfriendship;%s",screen_name)
     except tweepy.error.TweepError, e:
         print e
-        logr.error(e)
+        logr.error("in function remove_follow; %s"%e)
         
 ###
 ###

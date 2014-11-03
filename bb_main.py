@@ -10,6 +10,7 @@ import sys
 import pickle
 import config as cfg
 import os.path
+import time
 
 appendix = ''
 
@@ -152,7 +153,7 @@ class FavListener(bbl.tweepy.StreamListener):
         #add score if tweet is relevant
         score = bba.score_tweets(t.text, verbose = verbose)
         #Manage Favorites
-        if score > cfg.favorite_score:
+        if score >= cfg.favorite_score:
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_f.get_list()):
                 logr.info("favoriteprevented2similar;%s"%(t.id))
                 return True
@@ -204,7 +205,8 @@ if __name__ == "__main__":
             logging.shutdown()
             sys.exit()
         except Exception,e:
-            logr.error(e)          
+            logr.error("in main function%s"%e)
+            time.sleep(2)
             pass
 #==============================================================================
 #     except httplib.IncompleteRead,e:
