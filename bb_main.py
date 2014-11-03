@@ -160,9 +160,10 @@ class FavListener(bbl.tweepy.StreamListener):
             success = favorite_management(t.id, self.ca, self.api)
             if success:
                 self.ca_recent_f.add(t.text, auto_increase = True)
-                self.ca_recent_f.cprint()
+                #self.ca_recent_f.cprint()
         #Manage Retweets
         if score >= cfg.status_update_score:
+            print "entering status updates"
             url = bba.extract_url_from_tweet(t.text)
             if url:
                 text = TextBuilder.build_text(url)

@@ -63,7 +63,7 @@ class CyclicArray(object):
         self.inc_lock = False
         
     def cprint(self):
-        print "Count: ", self.count
+        print "Cyclic Array Count: ", self.count
         print self.l
     
     def increase_count(self):
@@ -220,9 +220,8 @@ def add_favorite(id, api):
         return True
     except tweepy.error.TweepError, e:
         logr.info("FavoriteDenied;%s"%(id))
-        logr.error(e)
+        logr.error("in function add_favorite; %s"%e)
         print e[0]
-        sys.exit()
 
 def remove_favorite(id, api):
     try:
@@ -232,8 +231,7 @@ def remove_favorite(id, api):
         return True
     except tweepy.error.TweepError, e:
         print e
-        logr.debug(e)
-        sys.exit()
+        logr.debug("in function remove_favorite; %s"%e)
 
 
 class BuildText(object):
@@ -242,7 +240,7 @@ class BuildText(object):
         self.preambles = preambles
         self.hashtags = hashtags
         self.last_used_preamble = ""
-        if os.path.isfile("last_title"):
+        if os.path.isfile("last_title.sav"):
             self.last_titles = self.load_last_titles()
         else:
             self.last_titles = CyclicArray(100)
@@ -252,7 +250,6 @@ class BuildText(object):
             t = lxml.html.parse(url)
             text = t.find(".//title").text
             if self.last_titles.isin(text):
-                print "DEBUG: Title has already been TWeeted"
                 raise
             if len(text) > 20:
                 self.last_titles.add(text, auto_increase= True)
@@ -264,11 +261,11 @@ class BuildText(object):
             return None
 
     def load_last_titles(self):
-        with open("last_title","r") as f:
+        with open("last_title.sav","r") as f:
             return pickle.load(f)
 
     def update_last_titles(self, l):
-        f = open("last_title","w")
+        f = open("last_title.sav","w")
         pickle.dump(l,f)
         f.close()
         return
@@ -283,7 +280,8 @@ class BuildText(object):
         if not title:
             return None
         text = "%s %s"%(title, url)
-        if not text:
+        #Title must exist an consist of at least 4 words
+        if not text or len(text.split(" ")) < 3:
             return None
         #add hashtags until tweet length is full
         for i in xrange(3):
@@ -300,7 +298,10 @@ def update_status(text, api):
     if len(text) > 135:
         if cfg.verbose: print "Text Too Long!"
         return None
-    status = api.update_status(text)
+    try:
+        status = api.update_status(text)
+    except tweepy.error.TweepError, es:
+        logr.error("in function bblib:update_status;%s"%e)
     logr.info("StatusUpdate;%s"%(text))
     return
 
