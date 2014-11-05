@@ -11,6 +11,8 @@ import pickle
 import config as cfg
 import os.path
 import time
+import traceback
+import random
 
 appendix = ''
 
@@ -44,14 +46,15 @@ if cfg.dump_score > 0:
     logr_2.setLevel(logging.INFO)
     logr_2.addHandler(hdlr_2)
 
-def favorite_management(id, ca, api):
+def favorite_management(t, ca, api):
+    if random.random() > 0.3: return False
     #check if ID is already favorited. If yes, interrupt.
-    if ca.isin(id):
+    if ca.isin(t.id):
         return True
-    status = bbl.add_favorite(id, api)
+    status = bbl.add_favorite(t.id, api)
     if not status:
         return False
-    ca.add(id)
+    ca.add(t.id)
     next_entry = ca.get_next_entry()
     if next_entry:
         #try except needed becasue users may not exist anymore in the future. removing them would then throw an error
@@ -61,11 +64,12 @@ def favorite_management(id, ca, api):
     bbl.ca_save_state(ca, "favorites")
     return True
 
-def retweet_management(id, ca, api):
+def retweet_management(t, ca, api):
+    if random.random() > 0.3: return False
     lp("Entering Retweet Management")
-    if ca.isin(id):
+    if ca.isin(t.id):
         return False
-    rt_id = bbl.retweet(id, api)
+    rt_id = bbl.retweet(t.id, api)
     if not rt_id:
         return False
     ca.add(rt_id)
@@ -79,6 +83,7 @@ def retweet_management(id, ca, api):
     return True
 
 def follow_management(t, ca, api):
+    bbl.cleanup_followers(api)
     lp("entering follow management")
     if ca.isin(t.user_id):
         return False
@@ -96,29 +101,34 @@ def follow_management(t, ca, api):
 
 
 class tweet_buffer(object):
-    def __init__(self, ca, api):
+    def __init__(self, ca, api, management_fct, delta_time):
         self.buffer = []
         self.ca = ca
         self.api = api
-        self.time = bba.minutes_of_day()
-        lp("%s, time"%(str(self.time)))
+        self.management_fct = management_fct
+        self.delta_time = delta_time
         lp("initiate tweet buffer")
         logr.info("initiate tweet buffer")
 
     def add_to_buffer(self, t, score):
-        if bba.minutes_of_day() - self.time > 1:
-            self.time = bba.minutes_of_day()
+        if bba.minutes_of_day() % self.delta_time == 0:
             self.flush_buffer()            
             self.buffer = []
-        self.buffer.append((score,t))
+        else:
+            self.buffer.append((score,t))
         
     def flush_buffer(self):
         lp("Flush Buffer!%s"%str(bba.minutes_of_day()))
         self.buffer.sort(reverse = True)
-        for i in xrange(3):
-            tweet = self.buffer[i][1]
-            print self.time, self.buffer[i][0], tweet.text
-            follow_management(tweet, ca = self.ca, api = self.api)
+        for i in xrange(len(self.buffer)):
+            try:
+                tweet = self.buffer[i][1]
+            except IndexError:
+                print self.buffer
+                raise
+            args = (tweet, self.ca, self.api)
+            #Introduce some randomness such that not everything is retweeted favorited and statused
+            self.management_fct(*args)
         return True
 
 class FavListener(bbl.tweepy.StreamListener):
@@ -138,7 +148,12 @@ class FavListener(bbl.tweepy.StreamListener):
         self.ca_f.release_add_lock_if_necessary()
 
         self.CSim = bba.CosineStringSimilarity()
-        self.tbuffer = tweet_buffer(api = self.api, ca = self.ca_f)
+
+        #Buffers for all 4 Types of Interaction
+        self.tbuffer = tweet_buffer(api = self.api, ca = self.ca_f, management_fct=follow_management, delta_time=cfg.activity_frequency)
+        self.tbuffer_rt = tweet_buffer(api = self.api, ca = self.ca_r, management_fct=retweet_management, delta_time = cfg.activity_frequency)
+        self.tbuffer_fav = tweet_buffer(api = self.api, ca = self.ca, management_fct=favorite_management, delta_time = cfg.activity_frequency)
+        #self.tbuffer_status = tweet_buffer(api = self.api, ca = self.ca_st, management_fct=follow_management)
 
     def on_data(self, data):
         t = bbl.tweet2obj(data)
@@ -157,27 +172,23 @@ class FavListener(bbl.tweepy.StreamListener):
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_f.get_list()):
                 logr.info("favoriteprevented2similar;%s"%(t.id))
                 return True
-            success = favorite_management(t.id, self.ca, self.api)
-            if success:
-                self.ca_recent_f.add(t.text, auto_increase = True)
-                #self.ca_recent_f.cprint()
-        #Manage Retweets
+            self.tbuffer_fav.add_to_buffer(t, score)
+            self.ca_recent_f.add(t.text, auto_increase = True)
+        #Manage Status Updates
         if score >= cfg.status_update_score:
-            print "entering status updates"
             url = bba.extract_url_from_tweet(t.text)
             if url:
                 text = TextBuilder.build_text(url)
-                if text:
+                #Introduce some randomness such that not everything is automatically posted
+                if text and random.random() > 0.5:
                     bbl.update_status(text = text, api = self.api)
+        #Manage Retweets
         if score >= cfg.retweet_score:
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_r.get_list()):
                 logr.info("retweetprevented2similar;%s"%(t.id))
                 return True
-            lp("score is,")
-            lp(score)
-            success = retweet_management(t.id, self.ca_r, self.api)
-            if success:
-                self.ca_recent_r.add(t.text, auto_increase = True)
+            self.tbuffer_rt.add_to_buffer(t, score)
+            self.ca_recent_r.add(t.text, auto_increase = True)
         #Manage Follows
         if score >= cfg.follow_score:
             self.tbuffer.add_to_buffer(t, score)         
@@ -206,7 +217,11 @@ if __name__ == "__main__":
             logging.shutdown()
             sys.exit()
         except Exception,e:
-            logr.error("in main function%s"%e)
+            logr.error("in main function; %s"%e)
+            print "Exception in user code:"
+            print '-'*60
+            traceback.print_exc(file=sys.stdout)
+            print '-'*60
             time.sleep(2)
             pass
 #==============================================================================

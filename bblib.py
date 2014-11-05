@@ -215,7 +215,7 @@ def print_tweet(t):
 def add_favorite(id, api):
     try:
         api.create_favorite(id)
-        print "favorite added"
+        if cfg.verbose: print "favorite added"
         logr.info("Favorite;%s"%(id))
         return True
     except tweepy.error.TweepError, e:
@@ -226,7 +226,7 @@ def add_favorite(id, api):
 def remove_favorite(id, api):
     try:
         api.destroy_favorite(id)
-        print "favorite removed"
+        if cfg.verbose: print "favorite removed"
         logr.info("FavoriteDestroyed;%s"%(id))
         return True
     except tweepy.error.TweepError, e:
@@ -300,7 +300,7 @@ def update_status(text, api):
         return None
     try:
         status = api.update_status(text)
-    except tweepy.error.TweepError, es:
+    except tweepy.error.TweepError, e:
         logr.error("in function bblib:update_status;%s"%e)
     logr.info("StatusUpdate;%s"%(text))
     return
@@ -308,7 +308,7 @@ def update_status(text, api):
 def retweet(id, api):
     try:
         status = api.retweet(id)
-        print "retweeted"
+        if cfg.verbose: print "retweeted"
         logr.info("Retweet;%s;%s"%(id,status.id))
         return status.id
     except tweepy.error.TweepError, e:
@@ -335,7 +335,7 @@ def in_time():
         return True
     if now_time >= datetime.time(11,45) and now_time <= datetime.time(22,00):
         return True
-    print "Request not in allowed time"
+    if cfg.verbose: print "Request not in allowed time"
     return False
 
 def follow_gate_open():  
@@ -355,16 +355,16 @@ def add_as_follower(t, api, verbose = False):
     if not follow_gate_open():
         logr.info("Follow Gate Closed")
         if verbose:
-            print "follow gate closed"
+            if cfg.verbose: print "follow gate closed"
         return False
     if not t.user_lang in cfg.languages:
         logr.info("follow not carried out because language did not match")
         return False 
     try:
         api.create_friendship(t.user_screen_name)
-        print datetime.datetime.now(),"followed", t.user_name, t.user_screen_name
+        if cfg.verbose: print datetime.datetime.now(),"followed", t.user_name, t.user_screen_name
         logr.info("followinguser;%s,%s;%s;%s",t.user_id, t.user_name, t.user_screen_name, t.user_description)
-        if verbose:
+        if cfg.verbose:
             print "Following User"
             print t.user_screen_name
             print t.user_description
@@ -398,7 +398,22 @@ def remove_follow(screen_name, api):
     except tweepy.error.TweepError, e:
         print e
         logr.error("in function remove_follow; %s"%e)
-        
+
+def cleanup_followers(api):
+    me = api.me()
+    if me.friends_count > cfg.number_active_follows+9:
+        for friend in api.friends():
+            remove_follow(friend.screen_name, api)
+    if me.statuses_count > cfg.number_active_retweets+9:
+        for status in me.timeline():
+            try:
+                api.destroy_status(status.id)
+            except:
+                pass
+    if me.favourites_count > cfg.number_active_favorites+9:
+        for fav in api.favorites():
+             remove_favorite(fav.id, api)
+
 ###
 ###
 #Test Connect to Stream
