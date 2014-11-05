@@ -120,7 +120,7 @@ class tweet_buffer(object):
     def flush_buffer(self):
         lp("Flush Buffer!%s"%str(bba.minutes_of_day()))
         self.buffer.sort(reverse = True)
-        for i in xrange(len(self.buffer)):
+        for i in xrange(min(3,len(self.buffer))):
             try:
                 tweet = self.buffer[i][1]
             except IndexError:
