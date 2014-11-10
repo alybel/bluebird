@@ -179,6 +179,9 @@ class FavListener(bbl.tweepy.StreamListener):
             url = bba.extract_url_from_tweet(t.text)
             if url:
                 text = TextBuilder.build_text(url)
+                #in case the text retrieved from the headline contains negative or forbidden keywords, don't send the update
+                if bba.score_tweets(text, verbose = verbose) < cfg.status_update_score:
+                    return True
                 #Introduce some randomness such that not everything is automatically posted
                 if text and random.random() > 0.5:
                     bbl.update_status(text = text, api = self.api)
