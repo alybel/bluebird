@@ -404,15 +404,22 @@ def cleanup_followers(api):
     if me.friends_count > cfg.number_active_follows+9:
         for friend in api.friends():
             remove_follow(friend.screen_name, api)
+            logr.info("cleanupdestroy %s"%(friend.screen_name))
     if me.statuses_count > cfg.number_active_retweets+9:
         for status in me.timeline():
             try:
                 api.destroy_status(status.id)
+                logr.info("cleanupremovestatus %s"%(status.id))
             except:
                 pass
     if me.favourites_count > cfg.number_active_favorites+9:
         for fav in api.favorites():
-             remove_favorite(fav.id, api)
+            try:
+                remove_favorite(fav.id, api)
+                logr.info("cleanupremovefavorite %s"(fav.id))
+            except:
+                pass
+
 
 ###
 ###
