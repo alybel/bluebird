@@ -249,15 +249,20 @@ class BuildText(object):
         try:
             t = lxml.html.parse(url)
             text = t.find(".//title").text
+            if not text:
+                raise Exception("No Text in Website")
+            text = ru(text)
+            if not text:
+                raise Exception("Text has wrong encoding")
             if self.last_titles.isin(text):
-                raise
+                raise Exception("already twittered")
             if len(text) > 20:
                 self.last_titles.add(text, auto_increase= True)
                 self.update_last_titles(self.last_titles)
                 return text
             else:
                 return None
-        except:
+        except Exception, e:
             return None
 
     def load_last_titles(self):

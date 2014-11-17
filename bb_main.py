@@ -180,11 +180,12 @@ class FavListener(bbl.tweepy.StreamListener):
             if url:
                 text = TextBuilder.build_text(url)
                 #in case the text retrieved from the headline contains negative or forbidden keywords, don't send the update
-                if bba.score_tweets(text, verbose = verbose) < cfg.status_update_score:
-                    return True
-                #Introduce some randomness such that not everything is automatically posted
-                if text and random.random() > 0.5:
-                    bbl.update_status(text = text, api = self.api)
+                if text: #in some cases, text may be None.
+                    if bba.score_tweets(text, verbose = verbose) < cfg.status_update_score:
+                        return True
+                    #Introduce some randomness such that not everything is automatically posted
+                    if text and random.random() > 0.5:
+                        bbl.update_status(text = text, api = self.api)
         #Manage Retweets
         if score >= cfg.retweet_score:
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_r.get_list()):
