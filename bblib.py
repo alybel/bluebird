@@ -289,9 +289,12 @@ class BuildText(object):
         if not text or len(text.split(" ")) < 3:
             return None
         #add hashtags until tweet length is full
+        help_hashtags = self.hashtags
         for i in xrange(3):
             old_text = text
-            text += " " + random.choice(self.hashtags)
+            hash = random.choice(help_hashtags)
+            help_hashtags.pop(help_hashtags.index(hash))
+            text += " " + hash
             if len(text) > 140:
                 text = old_text
                 break
@@ -409,12 +412,12 @@ def cleanup_followers(api):
     if me.friends_count > cfg.number_active_follows+9:
         for friend in api.friends():
             remove_follow(friend.screen_name, api)
-            logr.info("cleanupdestroy %s"%(friend.screen_name))
+            logr.info("cleanupdestroy %s"%friend.screen_name)
     if me.statuses_count > cfg.number_active_retweets+9:
         for status in me.timeline():
             try:
                 api.destroy_status(status.id)
-                logr.info("cleanupremovestatus %s"%(status.id))
+                logr.info("cleanupremovestatus %s"%status.id)
             except:
                 pass
     if me.favourites_count > cfg.number_active_favorites+9:
