@@ -83,7 +83,6 @@ def retweet_management(t, ca, api):
     return True
 
 def follow_management(t, ca, api):
-    bbl.cleanup_followers(api)
     lp("entering follow management")
     if ca.isin(t.user_id):
         return False
@@ -154,6 +153,9 @@ class FavListener(bbl.tweepy.StreamListener):
         self.tbuffer_rt = tweet_buffer(api = self.api, ca = self.ca_r, management_fct=retweet_management, delta_time = cfg.activity_frequency)
         self.tbuffer_fav = tweet_buffer(api = self.api, ca = self.ca, management_fct=favorite_management, delta_time = cfg.activity_frequency)
         #self.tbuffer_status = tweet_buffer(api = self.api, ca = self.ca_st, management_fct=follow_management)
+
+        #refresh followers and statusses
+        bbl.cleanup_followers(api, ca_follow = self.ca_f, ca_stat = self.ca_r, ca_fav = self.ca)
 
     def on_data(self, data):
         t = bbl.tweet2obj(data)

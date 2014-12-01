@@ -56,6 +56,15 @@ class CyclicArray(object):
         self.add_lock = False
         self.inc_lock = False
 
+    def load_with_array(self, arr = []):
+        arr_len = len(arr)
+        if arr_len > self.array_length:
+            raise Exception("in class CyclicArray function load_with_array: array to load is too long.")
+        self.reset()
+        for el in arr:
+            self.add(el, auto_increase=True)
+        print "successfully loaded cyclic array with array"
+
     def reset(self):
         self.count = 0
         self.l = self.array_length*[None]
@@ -391,10 +400,11 @@ def add_as_follower(t, api, verbose = False):
         
 def remove_follow(screen_name, api):
     if str(screen_name).isdigit():
-        print "ERROR in remove follow: Only Screen Names are allowed!!"
-        print "Screen Name was", screen_name
-        #raise
-        #return
+        try:
+            user = api.get_user(screen_name)
+        except:
+            raise Exception("In Function remove_follow. User object could not be loaded.")
+        screen_name = user.screen_name
     
     if screen_name in cfg.accounts_never_delete:
         logr.info("unfollowprevented;%s"%(screen_name))
@@ -407,12 +417,31 @@ def remove_follow(screen_name, api):
         print e
         logr.error("in function remove_follow; %s"%e)
 
-def cleanup_followers(api):
+def get_friends_ids(api, user = None):
+    """
+    :param api: twitter api object
+    :param user: twitter user object. if no user is provided, the user that the api refers to is used.
+    :return: list of friends (limited to 5000)
+    """
+    if not user:
+        user = api.me()
+    #ToDo: in friends_ids needs to be implemented to receive more than 5000 ids
+    #friends ids come sorted from freshly added to old.
+    return user.friends_ids()
+
+def cleanup_followers(api, ca_follow = None, ca_stat = None, ca_fav = None):
     me = api.me()
-    if me.friends_count > cfg.number_active_follows+9:
-        for friend in api.friends():
-            remove_follow(friend.screen_name, api)
-            logr.info("cleanupdestroy %s"%friend.screen_name)
+    friends_diff = me.friends_count - (cfg.number_active_follows+10)
+    if friends_diff > 0:
+        friends_ids = get_friends_ids(api=api, user=me)
+        for friend in random.sample(friends_ids,friends_diff+20):
+            #replace screen name and pop ids from friends and refresh cyclic array
+            user = api.get_user(friend)
+            screen_name = user.screen_name
+            remove_follow(screen_name, api)
+            logr.info("cleanupdestroy %s"%screen_name)
+            friends_ids.pop(friends_ids.index(friend))
+        ca_follow.load_with_array(friends_ids)
     if me.statuses_count > cfg.number_active_retweets+9:
         for status in me.timeline():
             try:
