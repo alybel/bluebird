@@ -137,7 +137,12 @@ class FavListener(bbl.tweepy.StreamListener):
         #the oldest favorite is automatically removeedd.
         self.ca = bbl.ca_initialize("favorites")
         self.ca_r = bbl.ca_initialize("retweets")
-        self.ca_f = bbl.ca_initialize("follows")
+        #self.ca_f = bbl.ca_initialize("follows")
+
+        #build the followers cyclic array
+        self.ca_f = bbl.CyclicArray(len = bbl.get_ca_len("follows"))
+        #refresh followers and statusses
+        bbl.cleanup_followers(api, ca_follow = self.ca_f, ca_stat = self.ca_r, ca_fav = self.ca)
 
         self.ca_recent_r = bbl.CyclicArray(100)
         self.ca_recent_f =  bbl.CyclicArray(100)
@@ -154,8 +159,7 @@ class FavListener(bbl.tweepy.StreamListener):
         self.tbuffer_fav = tweet_buffer(api = self.api, ca = self.ca, management_fct=favorite_management, delta_time = cfg.activity_frequency)
         #self.tbuffer_status = tweet_buffer(api = self.api, ca = self.ca_st, management_fct=follow_management)
 
-        #refresh followers and statusses
-        bbl.cleanup_followers(api, ca_follow = self.ca_f, ca_stat = self.ca_r, ca_fav = self.ca)
+
 
     def on_data(self, data):
         t = bbl.tweet2obj(data)
