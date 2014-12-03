@@ -298,11 +298,13 @@ class BuildText(object):
         if not text or len(text.split(" ")) < 3:
             return None
         #add hashtags until tweet length is full
-        help_hashtags = self.hashtags
-        for i in xrange(3):
-            old_text = text
-            hash = random.choice(help_hashtags)
-            help_hashtags.pop(help_hashtags.index(hash))
+        help_hashtags = []
+        while True:
+            old_text = "%s"%text
+            hash = random.choice(self.hashtags)
+            if hash in help_hashtags:
+                continue
+            help_hashtags.append(hash)
             text += " " + hash
             if len(text) > 140:
                 text = old_text
@@ -417,6 +419,23 @@ def remove_follow(screen_name, api):
         print e
         logr.error("in function remove_follow; %s"%e)
 
+def get_statuses(api, username = cfg.own_twittername):
+    """
+    :param api: twitter api
+    :param username: own twittername or given screen_name
+    :return: list of statuses
+    """
+    tl = api.user_timeline(screen_name = username, count = 200)
+    max_id = tl[-1].id
+    while True:
+        tlx = api.user_timeline(screen_name = username, count = 200, max_id = max_id)
+        if len(tlx)>1:
+            tl.extend(tlx)
+            max_id = tl[-1].id
+        else:
+            break
+    return tl
+
 def get_friends_ids(api, user = None):
     """
     :param api: twitter api object
@@ -442,13 +461,18 @@ def cleanup_followers(api, ca_follow = None, ca_stat = None, ca_fav = None):
             logr.info("cleanupdestroy %s"%screen_name)
             friends_ids.pop(friends_ids.index(friend))
     ca_follow.load_with_array(friends_ids)
-    if me.statuses_count > cfg.number_active_retweets+9:
-        for status in me.timeline():
+
+    statuses = get_statuses(api)
+    stat_diff = me.statuses_count - (cfg.number_active_retweets+9)
+    if stat_diff > 0:
+        for status in random.sample(statuses, stat_diff+20):
             try:
                 api.destroy_status(status.id)
                 logr.info("cleanupremovestatus %s"%status.id)
+                statuses.pop(statuses.index(status))
             except:
                 pass
+    ca_stat.load_with_array(statuses)
     if me.favourites_count > cfg.number_active_favorites+9:
         for fav in api.favorites():
             try:

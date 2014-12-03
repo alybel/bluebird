@@ -30,7 +30,7 @@ logr.addHandler(hdlr_1)
 
 verbose = cfg.verbose
 
-TextBuilder = bbl.BuildText(cfg.preambles, cfg.hashtags)
+TextBuilder = bbl.BuildText(preambles = cfg.preambles, hashtags = cfg.hashtags)
 
 def lp(s):
     """print this line if verbose is true """
@@ -136,11 +136,12 @@ class FavListener(bbl.tweepy.StreamListener):
         #ca is a cyclic array that contains the tweet ID's there were favorited. Once the number_active_favorites is reached, 
         #the oldest favorite is automatically removeedd.
         self.ca = bbl.ca_initialize("favorites")
-        self.ca_r = bbl.ca_initialize("retweets")
+        #self.ca_r = bbl.ca_initialize("retweets")
         #self.ca_f = bbl.ca_initialize("follows")
 
         #build the followers cyclic array
         self.ca_f = bbl.CyclicArray(len = bbl.get_ca_len("follows"))
+        self.ca_r = bbl.CyclicArray(len = bbl.get_ca_len("retweets"))
         #refresh followers and statusses
         bbl.cleanup_followers(api, ca_follow = self.ca_f, ca_stat = self.ca_r, ca_fav = self.ca)
 
@@ -158,8 +159,6 @@ class FavListener(bbl.tweepy.StreamListener):
         self.tbuffer_rt = tweet_buffer(api = self.api, ca = self.ca_r, management_fct=retweet_management, delta_time = cfg.activity_frequency)
         self.tbuffer_fav = tweet_buffer(api = self.api, ca = self.ca, management_fct=favorite_management, delta_time = cfg.activity_frequency)
         #self.tbuffer_status = tweet_buffer(api = self.api, ca = self.ca_st, management_fct=follow_management)
-
-
 
     def on_data(self, data):
         t = bbl.tweet2obj(data)
