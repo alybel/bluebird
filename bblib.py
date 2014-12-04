@@ -299,7 +299,7 @@ class BuildText(object):
             return None
         #add hashtags until tweet length is full
         help_hashtags = []
-        while True:
+        for i in xrange(3):
             old_text = "%s"%text
             hash = random.choice(self.hashtags)
             if hash in help_hashtags:

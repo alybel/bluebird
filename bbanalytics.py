@@ -85,8 +85,10 @@ def score_tweets(t="", verbose = False):
             score += keywords[word]
         if word in negative_keywords:
             score -= 10
-        if word in forbidden_keywords:
-            score -= 1000
+        #Loop over forbidden keywords and check if forbidden word in word from text. This covers also cases like "microsoft's"
+        for check_word in forbidden_keywords:
+            if check_word in word:
+                score -= 1000
     if score >=0 and verbose:
         logr.info("TestTweet;%d;%s:%s"%(score,q,t))
         print score
