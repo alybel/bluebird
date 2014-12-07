@@ -100,12 +100,13 @@ def follow_management(t, ca, api):
 
 
 class tweet_buffer(object):
-    def __init__(self, ca, api, management_fct, delta_time):
+    def __init__(self, ca, api, management_fct, delta_time, max_number_actions = 3):
         self.buffer = []
         self.ca = ca
         self.api = api
         self.management_fct = management_fct
         self.delta_time = delta_time
+        self.max_number_actions = max_number_actions
         lp("initiate tweet buffer")
         logr.info("initiate tweet buffer")
 
@@ -119,7 +120,7 @@ class tweet_buffer(object):
     def flush_buffer(self):
         lp("Flush Buffer!%s"%str(bba.minutes_of_day()))
         self.buffer.sort(reverse = True)
-        for i in xrange(min(3,len(self.buffer))):
+        for i in xrange(min(self.max_number_actions,len(self.buffer))):
             try:
                 tweet = self.buffer[i][1]
             except IndexError:
@@ -155,9 +156,12 @@ class FavListener(bbl.tweepy.StreamListener):
         self.CSim = bba.CosineStringSimilarity()
 
         #Buffers for all 4 Types of Interaction
-        self.tbuffer = tweet_buffer(api = self.api, ca = self.ca_f, management_fct=follow_management, delta_time=cfg.activity_frequency)
-        self.tbuffer_rt = tweet_buffer(api = self.api, ca = self.ca_r, management_fct=retweet_management, delta_time = cfg.activity_frequency)
-        self.tbuffer_fav = tweet_buffer(api = self.api, ca = self.ca, management_fct=favorite_management, delta_time = cfg.activity_frequency)
+        self.tbuffer = tweet_buffer(api = self.api, ca = self.ca_f, management_fct=follow_management,
+                                    delta_time=cfg.activity_frequency, max_number_actions=200)
+        self.tbuffer_rt = tweet_buffer(api = self.api, ca = self.ca_r, management_fct=retweet_management,
+                                       delta_time = cfg.activity_frequency)
+        self.tbuffer_fav = tweet_buffer(api = self.api, ca = self.ca, management_fct=favorite_management,
+                                        delta_time = cfg.activity_frequency)
         #self.tbuffer_status = tweet_buffer(api = self.api, ca = self.ca_st, management_fct=follow_management)
 
     def on_data(self, data):
