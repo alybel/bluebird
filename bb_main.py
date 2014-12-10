@@ -193,7 +193,7 @@ class FavListener(bbl.tweepy.StreamListener):
                     if bba.score_tweets(text, verbose = verbose) < cfg.status_update_score:
                         return True
                     #Introduce some randomness such that not everything is automatically posted
-                    if text and random.random() > 0.5:
+                    if text and random.random() < cfg.status_update_prob:
                         bbl.update_status(text = text, api = self.api)
         #Manage Retweets
         if score >= cfg.retweet_score:
