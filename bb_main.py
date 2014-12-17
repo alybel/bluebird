@@ -3,12 +3,13 @@
 import logging
 import logging.handlers
 import sys
-import os.path
 import time
 import traceback
 import random
-import tweepy
 import argparse
+
+import tweepy
+
 
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
