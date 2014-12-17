@@ -1,4 +1,3 @@
-import config as cfg
 import re, math
 from collections import Counter
 import datetime
@@ -6,14 +5,27 @@ import logging
 logr = logging.getLogger("logger")
 import sys
 
+languages = []
+locations = []
+cfg = None
+keywords = []
+negative_keywords = []
+forbidden_keywords = []
+#Make config file available in this module
 
-languages = cfg.languages if cfg.languages != [] else None
-locations = cfg.locations if cfg.locations != [] else None
+def set_cfg(cfgobj = None):
+    global cfg
+    assert isinstance(cfgobj, object)
+    cfg = cfgobj
 
-#pre-process keywords
-#can be deleted
-#keywords = [str(x).lower().rstrip("s").replace("-","") for x in cfg.keywords]
-#negative_keywords = [str(x).lower().rstrip("s").replace("-","") for x in cfg.negative_keywords]
+def initialize():
+    #ToDo call this function to define languages and locations"
+    global languages, locations, negative_keywords, forbidden_keywords
+    languages = cfg.languages if cfg.languages != [] else None
+    locations = cfg.locations if cfg.locations != [] else None
+    keywords = manage_keywords(cfg.keywords)
+    negative_keywords = cfg.negative_keywords
+    forbidden_keywords = cfg.forbidden_keywords
 
 def manage_keywords(d = {}):
     keylist = d.keys()    
@@ -24,10 +36,6 @@ def manage_keywords(d = {}):
                 d[k] = d[key]/2.
             d["".join(kv)] = d[key]
     return d
-
-keywords = manage_keywords(cfg.keywords)
-negative_keywords = cfg.negative_keywords
-forbidden_keywords = cfg.forbidden_keywords
 
 def generic_filter(entity, compare_list):
     if not compare_list: return True

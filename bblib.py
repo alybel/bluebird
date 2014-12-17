@@ -1,7 +1,6 @@
 #Basic functionality used for the bluebird project"
 import tweepy
 import json
-import config as cfg
 import bbanalytics
 import logging
 import pickle
@@ -16,25 +15,32 @@ import random
 import lxml.html
 
 
+#Make config file available in this module
+cfg = None
+def set_cfg(cfgobj = None):
+    global cfg
+    assert isinstance(cfgobj, object)
+    cfg = cfgobj
+
+def test_cfg():
+    #ToDo: Test function to check if config module is added properly. Can be removed at a later stage.
+    print cfg.own_twittername
+
+def initialize():
+    glob_today = str(datetime.date.today())
+    executed_number_follows_per_day[glob_today] = parse_number_follows_from_logfile()
+    print "already added number of users today:", executed_number_follows_per_day[glob_today]
 
 #verbose2 for all data that flows in
 verbose2 = False
 
-if not os.path.isfile("bluebird.log"):
-    f = open("bluebird.log","w")
-    f.close()
-    print "Logfile bluebird.log created."
-
 max_no_followers_per_day = 992
-
 logr = logging.getLogger("logger")
-
 executed_number_follows_per_day = collections.defaultdict(int)
-
 
 def parse_number_follows_from_logfile():
     today = str(datetime.date.today())
-    with open("bluebird.log", "r") as f:
+    with open("../accounts/%s/bluebird.log"%cfg.own_twittername, "r") as f:
         today_follow_counts = 0
         for line in f:
             if today in line and "followinguser" in line:
@@ -42,11 +48,7 @@ def parse_number_follows_from_logfile():
             if today in line and "follower_level_reached" in line:
                 return 5000
     return today_follow_counts
-    
-glob_today = str(datetime.date.today())
-executed_number_follows_per_day[glob_today] = parse_number_follows_from_logfile()
 
-print "already added number of users today:", executed_number_follows_per_day[glob_today]
 
 class CyclicArray(object):
     def __init__(self, len = 0):
@@ -419,12 +421,13 @@ def remove_follow(screen_name, api):
         print e
         logr.error("in function remove_follow; %s"%e)
 
-def get_statuses(api, username = cfg.own_twittername):
+def get_statuses(api, username = None):
     """
     :param api: twitter api
     :param username: own twittername or given screen_name
     :return: list of statuses
     """
+    if not username: username = cfg.own_twittername
     tl = api.user_timeline(screen_name = username, count = 200)
     max_id = tl[-1].id
     while True:

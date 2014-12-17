@@ -2,17 +2,16 @@
 
 import bbanalytics as bba
 import bblib as bbl
-import config as cfg
 import logging
 import logging.handlers
 import httplib
 import sys
 import pickle
-import config as cfg
 import os.path
 import time
 import traceback
 import random
+import argparse
 
 appendix = ''
 
@@ -23,28 +22,13 @@ formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
 # first file logger
 logr = logging.getLogger('logger')
-hdlr_1 = logging.handlers.RotatingFileHandler("bluebird.log", maxBytes=20000000, backupCount=1)
-hdlr_1.setFormatter(formatter)
-logr.setLevel(logging.INFO)
-logr.addHandler(hdlr_1)
-
-verbose = cfg.verbose
-
-TextBuilder = bbl.BuildText(preambles = cfg.preambles, hashtags = cfg.hashtags)
+hdlr_1 = None
+TextBuilder = None
 
 def lp(s):
     """print this line if verbose is true """
     if verbose:
         print s
-
-if cfg.dump_score > 0:
-    # second file logger
-    logr_2 = logging.getLogger('logger2')
-    hdlr_2 = logging.handlers.RotatingFileHandler("bb_dump.log", maxBytes=20000000, backupCount=1)
-    #hdlr_2 = logging.FileHandler('bb_dump.log')    
-    hdlr_2.setFormatter(formatter)
-    logr_2.setLevel(logging.INFO)
-    logr_2.addHandler(hdlr_2)
 
 def favorite_management(t, ca, api):
     if random.random() > 0.3: return False
@@ -218,6 +202,39 @@ class FavListener(bbl.tweepy.StreamListener):
         
 
 if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser(description = "Account Location has to be provided as a parameter")
+    parser.add_argument('-l', '--location', help='account name', required=True)
+    args = parser.parse_args()
+
+    sys.path.append("../accounts/%s/"%args.location)
+
+    try:
+        import config as cfg
+    except ImportError:
+        print "Account %s does not exist" % args.location
+        sys.exit(0)
+
+    print "running account:"
+    print cfg.own_twittername
+
+    hdlr_1 = logging.handlers.RotatingFileHandler("../accounts/%s/bluebird.log"%cfg.own_twittername, maxBytes=20000000, backupCount=1)
+    hdlr_1.setFormatter(formatter)
+    logr.setLevel(logging.INFO)
+    logr.addHandler(hdlr_1)
+
+    verbose = cfg.verbose
+
+    TextBuilder = bbl.BuildText(preambles = cfg.preambles, hashtags = cfg.hashtags)
+
+    import bblib as bbl
+    bbl.set_cfg(cfg)
+    bbl.initialize()
+
+    import bbanalytics as bba
+    bba.set_cfg(cfg)
+    bba.initialize()
+
     auth, api = bbl.connect_app_to_twitter()
     l = FavListener(api)
     stream = bbl.tweepy.Stream(auth, l)
@@ -237,12 +254,3 @@ if __name__ == "__main__":
             print '-'*60
             time.sleep(2)
             pass
-#==============================================================================
-#     except httplib.IncompleteRead,e:
-#         print "Read Error detected <- Manual Messsage"
-#         print e
-#         logr.error(e)
-#         sys.exit(0)
-#==============================================================================
-   # except Exception, e:
-   #     logr.error(e)
