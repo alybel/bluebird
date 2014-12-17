@@ -11,7 +11,6 @@ import collections
 import sys
 import os.path
 import random
-import random
 import lxml.html
 
 
@@ -19,12 +18,7 @@ import lxml.html
 cfg = None
 def set_cfg(cfgobj = None):
     global cfg
-    assert isinstance(cfgobj, object)
     cfg = cfgobj
-
-def test_cfg():
-    #ToDo: Test function to check if config module is added properly. Can be removed at a later stage.
-    print cfg.own_twittername
 
 def initialize():
     glob_today = str(datetime.date.today())
@@ -159,11 +153,12 @@ def ca_save_state(ca = None, name = ""):
 def connect_app_to_twitter():
     """
     Use credential in config file and use OAuth to connect to twitter. return the authentication and the api.
+    return auth, api
     """
+    import config as cfg
     auth = tweepy.OAuthHandler(cfg.consumer_key, cfg.consumer_secret)
     auth.set_access_token(cfg.access_token, cfg.access_token_secret)
     api = tweepy.API(auth)
-    api.rate_limit_status()
     return auth, api
 
 def ru(s = ""):
@@ -512,6 +507,7 @@ class DummyListener(tweepy.StreamListener):
         print status
 
 def test_stream():
+    print "running test_stream"
     auth, api = connect_app_to_twitter()
     l = DummyListener()
     stream = tweepy.Stream(auth, l)
@@ -526,5 +522,5 @@ def test_stream():
     
 if __name__ == '__main__':
     from pprint import pprint
-    connect_app_to_twitter()
+    #connect_app_to_twitter()
     test_stream()

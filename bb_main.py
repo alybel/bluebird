@@ -1,16 +1,13 @@
 #! /usr/bin/python -u
 
-import bbanalytics as bba
-import bblib as bbl
 import logging
 import logging.handlers
-import httplib
 import sys
-import pickle
 import os.path
 import time
 import traceback
 import random
+import tweepy
 import argparse
 
 appendix = ''
@@ -115,7 +112,7 @@ class tweet_buffer(object):
             self.management_fct(*args)
         return True
 
-class FavListener(bbl.tweepy.StreamListener):
+class FavListener(tweepy.StreamListener):
     def __init__(self, api):
         self.api = api
         #ca is a cyclic array that contains the tweet ID's there were favorited. Once the number_active_favorites is reached, 
@@ -162,6 +159,7 @@ class FavListener(bbl.tweepy.StreamListener):
         score = bba.score_tweets(t.text, verbose = verbose)
         #Manage Favorites
         if score >= cfg.favorite_score:
+            print 'enter favorites area'
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_f.get_list()):
                 logr.info("favoriteprevented2similar;%s"%(t.id))
                 return True
@@ -225,8 +223,6 @@ if __name__ == "__main__":
 
     verbose = cfg.verbose
 
-    TextBuilder = bbl.BuildText(preambles = cfg.preambles, hashtags = cfg.hashtags)
-
     import bblib as bbl
     bbl.set_cfg(cfg)
     bbl.initialize()
@@ -234,6 +230,8 @@ if __name__ == "__main__":
     import bbanalytics as bba
     bba.set_cfg(cfg)
     bba.initialize()
+
+    TextBuilder = bbl.BuildText(preambles = cfg.preambles, hashtags = cfg.hashtags)
 
     auth, api = bbl.connect_app_to_twitter()
     l = FavListener(api)

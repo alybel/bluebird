@@ -20,7 +20,7 @@ def set_cfg(cfgobj = None):
 
 def initialize():
     #ToDo call this function to define languages and locations"
-    global languages, locations, negative_keywords, forbidden_keywords
+    global languages, locations, negative_keywords, forbidden_keywords, keywords
     languages = cfg.languages if cfg.languages != [] else None
     locations = cfg.locations if cfg.locations != [] else None
     keywords = manage_keywords(cfg.keywords)
