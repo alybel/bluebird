@@ -10,11 +10,6 @@ import random
 import tweepy
 import argparse
 
-appendix = ''
-
-if os.path.isfile(".production"):
-    appendix = "prod_"
-
 formatter = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
 # first file logger
@@ -114,6 +109,7 @@ class tweet_buffer(object):
 
 class FavListener(tweepy.StreamListener):
     def __init__(self, api):
+        tweepy.StreamListener.__init__(self)
         self.api = api
         #ca is a cyclic array that contains the tweet ID's there were favorited. Once the number_active_favorites is reached, 
         #the oldest favorite is automatically removeedd.
@@ -159,7 +155,6 @@ class FavListener(tweepy.StreamListener):
         score = bba.score_tweets(t.text, verbose = verbose)
         #Manage Favorites
         if score >= cfg.favorite_score:
-            print 'enter favorites area'
             if self.CSim.tweets_similar_list(t.text, self.ca_recent_f.get_list()):
                 logr.info("favoriteprevented2similar;%s"%(t.id))
                 return True

@@ -450,6 +450,7 @@ def cleanup_followers(api, ca_follow = None, ca_stat = None, ca_fav = None):
     me = api.me()
     friends_diff = me.friends_count - (cfg.number_active_follows+10)
     friends_ids = get_friends_ids(api=api, user=me)
+    print len(friends_ids), "friends found"
     if friends_diff > 0:
         for friend in random.sample(friends_ids,friends_diff+20):
             #replace screen name and pop ids from friends and refresh cyclic array
@@ -461,7 +462,8 @@ def cleanup_followers(api, ca_follow = None, ca_stat = None, ca_fav = None):
     ca_follow.load_with_array(friends_ids)
 
     statuses = get_statuses(api)
-    stat_diff = me.statuses_count - (cfg.number_active_retweets+9)
+    print len(statuses), "statuses found"
+    stat_diff = me.statuses_count - cfg.number_active_retweets
     if stat_diff > 0:
         for status in random.sample(statuses, stat_diff+20):
             try:

@@ -3,23 +3,20 @@ from collections import Counter
 import datetime
 import logging
 logr = logging.getLogger("logger")
-import sys
 
+cfg = None
 languages = []
 locations = []
-cfg = None
 keywords = []
 negative_keywords = []
 forbidden_keywords = []
-#Make config file available in this module
 
+#Make config file available in this module
 def set_cfg(cfgobj = None):
     global cfg
-    assert isinstance(cfgobj, object)
     cfg = cfgobj
 
 def initialize():
-    #ToDo call this function to define languages and locations"
     global languages, locations, negative_keywords, forbidden_keywords, keywords
     languages = cfg.languages if cfg.languages != [] else None
     locations = cfg.locations if cfg.locations != [] else None
@@ -27,13 +24,21 @@ def initialize():
     negative_keywords = cfg.negative_keywords
     forbidden_keywords = cfg.forbidden_keywords
 
-def manage_keywords(d = {}):
+
+def manage_keywords(d):
+    """
+    split and iterate over keywords
+    :param d: dictionary that contains the keywords extracted from the configuration file
+    :return: a dictionary with mutually combined keywords
+    """
     keylist = d.keys()    
     for key in keylist: 
         if " " in key: 
             kv = key.split(" ")
             for k in kv:
+                #add each part of a keyword to the dict
                 d[k] = d[key]/2.
+            #add the joint parts of the keyword to the dict
             d["".join(kv)] = d[key]
     return d
 
