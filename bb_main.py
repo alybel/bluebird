@@ -18,13 +18,16 @@ logr = logging.getLogger('logger')
 hdlr_1 = None
 TextBuilder = None
 
+
 def lp(s):
     """print this line if verbose is true """
     if verbose:
         print s
 
+
 def favorite_management(t, ca, api):
-    if random.random() > 0.3: return False
+    if random.random() > 0.3:
+        return False
     #check if ID is already favorited. If yes, interrupt.
     if ca.isin(t.id):
         return True
@@ -41,8 +44,10 @@ def favorite_management(t, ca, api):
     bbl.ca_save_state(ca, "favorites")
     return True
 
+
 def retweet_management(t, ca, api):
-    if random.random() > 0.3: return False
+    if random.random() > 0.3:
+        return False
     lp("Entering Retweet Management")
     if ca.isin(t.id):
         return False
@@ -58,6 +63,7 @@ def retweet_management(t, ca, api):
     ca.increase_count()
     bbl.ca_save_state(ca, "retweets")
     return True
+
 
 def follow_management(t, ca, api):
     lp("entering follow management")
@@ -107,6 +113,7 @@ class tweet_buffer(object):
             #Introduce some randomness such that not everything is retweeted favorited and statused
             self.management_fct(*args)
         return True
+
 
 class FavListener(tweepy.StreamListener):
     def __init__(self, api):
@@ -182,14 +189,9 @@ class FavListener(tweepy.StreamListener):
             self.ca_recent_r.add(t.text, auto_increase = True)
         #Manage Follows
         if score >= cfg.follow_score:
-            self.tbuffer.add_to_buffer(t, score)         
-        if cfg.dump_score > 0 and score > cfg.dump_score:
-            if not t.retweet_count > 5:
-                return True
-            logr_2.info("%s;%s;%s"%(t.user_screen_name, t.user_description, t.text))
+            self.tbuffer.add_to_buffer(t, score)
         return True
-            
-            
+
     def on_error(self, status):
         print "error: ",
         print status

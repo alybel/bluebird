@@ -1,4 +1,5 @@
-import re, math
+import re
+import math
 from collections import Counter
 import datetime
 import logging
@@ -11,10 +12,12 @@ keywords = []
 negative_keywords = []
 forbidden_keywords = []
 
+
 #Make config file available in this module
-def set_cfg(cfgobj = None):
+def set_cfg(cfgobj=None):
     global cfg
     cfg = cfgobj
+
 
 def initialize():
     global languages, locations, negative_keywords, forbidden_keywords, keywords
@@ -42,16 +45,22 @@ def manage_keywords(d):
             d["".join(kv)] = d[key]
     return d
 
+
 def generic_filter(entity, compare_list):
-    if not compare_list: return True
-    if not entity in compare_list: return False
+    if not compare_list:
+        return True
+    if not entity in compare_list:
+        return False
     return True
+
 
 def lan_filter(lan):
     return generic_filter(lan, languages)
 
+
 def loc_filter(loc):
     return generic_filter(loc, locations)
+
 
 def filter_tweets(t):
     if cfg.only_with_url and not is_url_in_tweet(t.text):
@@ -59,6 +68,7 @@ def filter_tweets(t):
     if cfg.number_hashtags >= 0 and number_hashtags(t.text) > cfg.number_hashtags:
         return False
     return lan_filter(t.lan) and loc_filter(t.loc)
+
 
 def split_and_clean_text(t = ""):
     t = t.lower()
@@ -77,12 +87,14 @@ def split_and_clean_text(t = ""):
     t.extend(tstar)
     return list(set(t))
 
+
 def number_hashtags(t):
     count = 0
     for character in t:
         if character == "#":
             count +=1
     return count
+
 
 def score_tweets(t="", verbose = False):
     """
@@ -109,6 +121,7 @@ def score_tweets(t="", verbose = False):
         print t
     return score
 
+
 def is_url_in_tweet(t = ""):
     q = t.split(" ")
     for word in q:
@@ -118,6 +131,7 @@ def is_url_in_tweet(t = ""):
         return True
     return False
 
+
 def extract_url_from_tweet(t = ""):
     "extract url from a string. Check if url is more than 18 characters, as for example: http://bit.ly/fi23uhf"
     q = t.split(" ")
@@ -125,6 +139,7 @@ def extract_url_from_tweet(t = ""):
         if "http" in word and len(word) > 18:
             return word
     return None
+
 
 class CosineStringSimilarity(object):
     def __init__(self):
@@ -144,7 +159,7 @@ class CosineStringSimilarity(object):
         else:
             return float(numerator) / denominator
         
-    def text_to_vector(self,text):
+    def text_to_vector(self, text):
         words = self.WORD.findall(text)
         words = [x.lower() for x in words]
         words = list(set(words) - set(self.filling_words))
@@ -156,7 +171,7 @@ class CosineStringSimilarity(object):
         similarity = self.get_cosine(vector1, vector2)
         return similarity > 0.6
     
-    def tweets_similar_list(self, t, tl = []):
+    def tweets_similar_list(self, t, tl):
         for t2 in tl:
             if not t2:
                 continue
@@ -166,12 +181,8 @@ class CosineStringSimilarity(object):
             
             
 def minutes_of_day():
-    """
+    return datetime.datetime.now().time().minute + datetime.datetime.now().time().hour * 60
 
-    :rtype : datetime
-    """
-    return  datetime.datetime.now().time().minute + datetime.datetime.now().time().hour * 60
- 
+
 if __name__ == "__main__":
-    assert(lan_filter("fr") == False)
-    assert(loc_filter("usa") == True)
+    pass

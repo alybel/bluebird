@@ -155,7 +155,6 @@ def connect_app_to_twitter():
     Use credential in config file and use OAuth to connect to twitter. return the authentication and the api.
     return auth, api
     """
-    import config as cfg
     auth = tweepy.OAuthHandler(cfg.consumer_key, cfg.consumer_secret)
     auth.set_access_token(cfg.access_token, cfg.access_token_secret)
     api = tweepy.API(auth)
@@ -395,7 +394,6 @@ def add_as_follower(t, api, verbose = False):
         time.sleep(360)
         logr.error("in function add_as_follower;%s"%e)
         sys.exit(0)
-        return False
         
 def remove_follow(screen_name, api):
     if str(screen_name).isdigit():
