@@ -408,7 +408,6 @@ def remove_follow(screen_name, api):
         return 
     try:
         api.destroy_friendship(screen_name)
-        print "destroyed friendship", id
         logr.info("destroyedfriendship;%s",screen_name)
     except tweepy.error.TweepError, e:
         print e
@@ -427,7 +426,10 @@ def get_statuses(api, username = None):
         tlx = api.user_timeline(screen_name = username, count = 200, max_id = max_id)
         if len(tlx)>1:
             tl.extend(tlx)
-            max_id = tl[-1].id
+            if len(tl) > 0:
+                max_id = tl[-1].id
+            else:
+                break
         else:
             break
     return tl

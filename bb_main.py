@@ -7,6 +7,7 @@ import time
 import traceback
 import random
 import argparse
+import httplib
 
 import tweepy
 
@@ -203,8 +204,9 @@ if __name__ == "__main__":
     parser.add_argument('-l', '--location', help='account name', required=True)
     args = parser.parse_args()
 
-    sys.path.append("../accounts/%s/"%args.location)
-
+    account_path = "../accounts/%s/"%args.location
+    print account_path
+    sys.path.append(account_path)
     try:
         import config as cfg
     except ImportError:
@@ -242,6 +244,8 @@ if __name__ == "__main__":
             logr.info("EngineEnded")
             logging.shutdown()
             sys.exit()
+        except httplib.IncompleteRead, e:
+            logr.error("in main function; %s"%e)
         except Exception,e:
             logr.error("in main function; %s"%e)
             print "Exception in user code:"
