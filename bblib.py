@@ -421,7 +421,10 @@ def get_statuses(api, username = None):
     """
     if not username: username = cfg.own_twittername
     tl = api.user_timeline(screen_name = username, count = 200)
-    max_id = tl[-1].id
+    if len(tl) > 0 :
+        max_id = tl[-1].id
+    else:
+        return []
     while True:
         tlx = api.user_timeline(screen_name = username, count = 200, max_id = max_id)
         if len(tlx)>1:
