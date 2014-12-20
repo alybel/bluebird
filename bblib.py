@@ -221,7 +221,7 @@ def add_favorite(id, api):
     try:
         api.create_favorite(id)
         if cfg.verbose: print "favorite added"
-        logr.info("Favorite;%s"%(id))
+        logr.info("$$Favorite;%s"%(id))
         return True
     except tweepy.error.TweepError, e:
         logr.info("FavoriteDenied;%s"%(id))
@@ -317,14 +317,14 @@ def update_status(text, api):
         status = api.update_status(text)
     except tweepy.error.TweepError, e:
         logr.error("in function bblib:update_status;%s"%e)
-    logr.info("StatusUpdate;%s"%(text))
+    logr.info("$$StatusUpdate;%s"%(text))
     return
 
 def retweet(id, api):
     try:
         status = api.retweet(id)
         if cfg.verbose: print "retweeted"
-        logr.info("Retweet;%s;%s"%(id,status.id))
+        logr.info("$$Retweet;%s;%s"%(id,status.id))
         return status.id
     except tweepy.error.TweepError, e:
         print e
@@ -378,7 +378,7 @@ def add_as_follower(t, api, verbose = False):
     try:
         api.create_friendship(t.user_screen_name)
         if cfg.verbose: print datetime.datetime.now(),"followed", t.user_name, t.user_screen_name
-        logr.info("followinguser;%s,%s;%s;%s",t.user_id, t.user_name, t.user_screen_name, t.user_description)
+        logr.info("$$followinguser;%s,%s;%s;%s",t.user_id, t.user_name, t.user_screen_name, t.user_description)
         if cfg.verbose:
             print "Following User"
             print t.user_screen_name
